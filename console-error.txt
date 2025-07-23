@@ -1,0 +1,936 @@
+shell-eb6caa19.js:1 Navigation listeners online
+content.js:2 🚀 Reddit Comment Expander Pro: Content script loaded
+content.js:3 📍 Current URL: https://www.reddit.com/r/doordash/comments/1m2d74j/ocd_doordash_customer/
+content.js:4 📄 Document ready state: interactive
+content.js:9 🔧 Initializing RedditCommentExpander...
+reddit-detector.js:6 Reddit Comment Expander: Detected shReddit interface
+content.js:13 ✅ RedditDetector initialized
+content.js:16 ✅ AccessibilityManager initialized
+expander.js:33 Comment Expander initialized
+content.js:19 ✅ CommentExpander initialized
+content.js:22 ✅ FeatureGates initialized
+content.js:40 Detected Reddit version: shReddit
+content.js:41 Is comment page: true
+content.js:445 Settings loaded: {showFloatingButton: true, enableNotifications: true, batchSize: 3, delayMs: 200, expandReplies: true, …}
+content.js:73 Initializing Reddit Comment Expander
+content.js:299 Floating action button created and added to page
+ocd_doordash_customer/:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+ocd_doordash_customer/:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+reddit-detector.js:170 No selectors found for category: moreReplies
+findElements @ reddit-detector.js:170
+getAllExpandableElements @ reddit-detector.js:275
+expandAllComments @ content.js:336
+(anonymous) @ content.js:285
+reddit-detector.js:182 Found 8 continueThread elements using selector: faceplate-partial[loading="lazy"]
+reddit-detector.js:182 Found 100 collapsed elements using selector: shreddit-comment button[aria-expanded="false"]
+content.js:351 Starting to expand all comments
+expander.js:134 Scanning for expandable elements...
+reddit-detector.js:170 No selectors found for category: moreReplies
+findElements @ reddit-detector.js:170
+getAllExpandableElements @ reddit-detector.js:275
+scanAndQueueElements @ expander.js:136
+expandAll @ expander.js:73
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+reddit-detector.js:182 Found 8 continueThread elements using selector: faceplate-partial[loading="lazy"]
+reddit-detector.js:182 Found 100 collapsed elements using selector: shreddit-comment button[aria-expanded="false"]
+expander.js:137 Found 108 expandable elements
+expander.js:169 Queued 108 elements for expansion
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+script
+(anonymous) @ shell-eb6caa19.js:4
+(anonymous) @ shell-eb6caa19.js:4
+uy @ shell-eb6caa19.js:4
+_load @ shell-eb6caa19.js:1
+await in _load
+load @ shell-eb6caa19.js:1
+Nm @ shell-eb6caa19.js:1
+activateShareMenuFeature @ with-share-825d21bc.js:1
+handleDesktopShareClick @ with-share-825d21bc.js:1
+handleCommentDesktopShareClick @ shreddit-comment-share-button-f6d297bb.js:1
+handleCommentShareClick @ shreddit-comment-share-button-f6d297bb.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+sentry-bc0d3b33.js:1 Uncaught (in promise) TypeError: t.update is not a function
+    at t.captureSession (sentry-bc0d3b33.js:1:35507)
+    at gm._sendSessionUpdate (dist-80e1de36.js:323:43839)
+    at gm.captureSession (dist-80e1de36.js:323:43174)
+    at sentry-bc0d3b33.js:1:69830
+    at t.init (sentry-bc0d3b33.js:1:70085)
+    at i.then.then.o.init (ocd_doordash_customer/:21:785)
+    at Array.<anonymous> (ocd_doordash_customer/:21:3170)
+t.captureSession @ sentry-bc0d3b33.js:1
+_sendSessionUpdate @ dist-80e1de36.js:323
+captureSession @ dist-80e1de36.js:323
+(anonymous) @ sentry-bc0d3b33.js:1
+t.init @ sentry-bc0d3b33.js:1
+i.then.then.o.init @ ocd_doordash_customer/:21
+(anonymous) @ ocd_doordash_customer/:21
+await in (anonymous)
+(anonymous) @ ocd_doordash_customer/:21
+(anonymous) @ ocd_doordash_customer/:21
+Promise.then
+o @ ocd_doordash_customer/:21
+requestIdleCallback
+u @ ocd_doordash_customer/:21
+f @ ocd_doordash_customer/:21
+n.<computed> @ ocd_doordash_customer/:21
+Ad.onunhandledrejection @ dist-80e1de36.js:323
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+reposition @ user-flair-5a3d0626.js:1
+r @ sentry-bc0d3b33.js:1
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+reposition @ user-flair-5a3d0626.js:1
+r @ sentry-bc0d3b33.js:1
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+reposition @ user-flair-5a3d0626.js:1
+r @ sentry-bc0d3b33.js:1
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+reposition @ user-flair-5a3d0626.js:1
+r @ sentry-bc0d3b33.js:1
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+reposition @ user-flair-5a3d0626.js:1
+r @ sentry-bc0d3b33.js:1
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+open @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+scroll
+updateAriaStates @ user-flair-5a3d0626.js:1
+(anonymous) @ user-flair-5a3d0626.js:1
+Promise.then
+setStatus @ user-flair-5a3d0626.js:1
+close @ user-flair-5a3d0626.js:1
+set hidden @ select-controller-e76dc206.js:1
+close @ select-controller-e76dc206.js:1
+handleDocumentClick @ select-controller-e76dc206.js:1
+r @ sentry-bc0d3b33.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285
+ocd_doordash_customer/:1 Uncaught (in promise) AbortError: The user aborted a request.
+Promise.then
+show @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+(anonymous) @ select-controller-e76dc206.js:1
+handleEvent @ icon-78f6a1ec.js:1
+expandCollapsedComment @ expander.js:273
+expandElement @ expander.js:230
+processBatch @ expander.js:182
+await in processBatch
+expandAll @ expander.js:82
+await in expandAll
+expandAllComments @ content.js:367
+(anonymous) @ content.js:285

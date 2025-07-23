@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Reddit Comment Expander - Logs</title>
+  <style>
+    body {
+      width: 400px;
+      height: 500px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #212529;
+    }
+    
+    .clear-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .clear-btn:hover {
+      background: #c82333;
+    }
+    
+    .logs-container {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      height: 400px;
+      overflow-y: auto;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .log-time {
+      color: #6c757d;
+      font-size: 10px;
+    }
+    
+    .log-error {
+      color: #dc3545;
+    }
+    
+    .log-warning {
+      color: #ffc107;
+    }
+    
+    .log-info {
+      color: #17a2b8;
+    }
+    
+    .log-success {
+      color: #28a745;
+    }
+    
+    .no-logs {
+      color: #6c757d;
+      text-align: center;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Extension Logs</div>
+    <button class="clear-btn" id="clearLogs">Clear Logs</button>
+  </div>
+  
+  <div class="logs-container" id="logsContainer">
+    <div class="no-logs">No logs available</div>
+  </div>
+  
+  <script src="logs.js"></script>
+</body>
+</html> 

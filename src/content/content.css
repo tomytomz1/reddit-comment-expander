@@ -1,0 +1,302 @@
+/* Enhanced Reddit Comment Expander Styles */
+
+#reddit-comment-expander-fab {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#reddit-comment-expander-fab:hover {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 69, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 69, 0, 0);
+  }
+}
+
+/* Status Overlay Styles */
+.reddit-expander-status-overlay {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.status-message {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.status-progress {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  height: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-text {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 4px;
+  display: block;
+}
+
+.status-category,
+.status-time {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+/* Context Menu Styles */
+.reddit-expander-context-menu {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-width: 180px;
+}
+
+.reddit-expander-context-menu div:hover {
+  background: #f0f0f0;
+}
+
+/* Settings Dialog Styles */
+.reddit-expander-settings-dialog {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.reddit-expander-settings-dialog h2 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.reddit-expander-settings-dialog label {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+}
+
+.reddit-expander-settings-dialog input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.reddit-expander-settings-dialog button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.reddit-expander-settings-dialog #settings-save {
+  background: #4CAF50;
+  color: white;
+}
+
+.reddit-expander-settings-dialog #settings-save:hover {
+  background: #45a049;
+}
+
+.reddit-expander-settings-dialog #settings-cancel {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.reddit-expander-settings-dialog #settings-cancel:hover {
+  background: #e0e0e0;
+}
+
+/* Help Dialog Styles */
+.reddit-expander-help-dialog {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.reddit-expander-help-dialog h2 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.reddit-expander-help-dialog h3 {
+  margin: 16px 0 8px 0;
+  color: #555;
+  font-size: 16px;
+}
+
+.reddit-expander-help-dialog ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.reddit-expander-help-dialog li {
+  margin: 4px 0;
+  color: #666;
+}
+
+.reddit-expander-help-dialog p {
+  margin: 8px 0;
+  color: #666;
+  line-height: 1.4;
+}
+
+.reddit-expander-help-dialog button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.reddit-expander-help-dialog button:hover {
+  background: #45a049;
+}
+
+/* Screen Reader Only */
+.reddit-expander-sr-only {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  #reddit-comment-expander-fab {
+    border: 2px solid white;
+  }
+  
+  .reddit-expander-status-overlay {
+    border: 2px solid white;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  #reddit-comment-expander-fab:hover {
+    animation: none;
+  }
+  
+  .progress-bar {
+    transition: none;
+  }
+}
+
+/* Premium Upgrade Popup Styles */
+.reddit-expander-upgrade-prompt.premium {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10002;
+  max-width: 400px;
+  width: 90vw;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.premium-upgrade-popup {
+  padding: 32px 28px 24px 28px;
+  background: linear-gradient(135deg, #f8fafc 60%, #e0e7ff 100%);
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(76, 175, 80, 0.08);
+  text-align: center;
+}
+.premium-upgrade-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.premium-crown {
+  font-size: 2.2rem;
+  color: #FFD700;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 8px #fffbe6, 0 1px 0 #bfa100;
+}
+.premium-upgrade-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 0.01em;
+}
+.premium-upgrade-message {
+  margin: 0 0 22px 0;
+  color: #444;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+.premium-upgrade-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.premium-upgrade-btn {
+  background: linear-gradient(90deg, #4CAF50 60%, #43e97b 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.premium-upgrade-btn:hover {
+  background: linear-gradient(90deg, #43e97b 60%, #38f9d7 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.22);
+}
+.premium-later-btn {
+  background: #f4f4f4;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+}
+.premium-later-btn:hover {
+  background: #e0e7ff;
+  color: #222;
+}
+.premium-upgrade-footer {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #888;
+  opacity: 0.95;
+  letter-spacing: 0.01em;
+}

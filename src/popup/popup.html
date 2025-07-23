@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reddit Comment Expander Pro</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Reddit Comment Expander Pro</h1>
+      <p class="subtitle">Expand all Reddit comments instantly</p>
+    </div>
+    
+    <div class="main-content">
+      <button id="expandAllBtn" class="expand-btn">
+        <span class="btn-icon">↕️</span>
+        <span class="btn-text">Expand All</span>
+      </button>
+      
+      <div class="info-section">
+        <p class="info-text">Click to expand all collapsed comments on the current Reddit page.</p>
+        <div id="usage-info" class="usage-info">
+          <p class="version">v1.0.0 - Free Tier</p>
+        </div>
+      </div>
+      
+      <div class="status" id="status">
+        <span class="status-text">Ready to expand comments</span>
+      </div>
+      
+      <!-- Settings Section -->
+      <div class="settings-section">
+        <h3>Settings</h3>
+        <div class="setting-item">
+          <label for="showFloatingButton">
+            <input type="checkbox" id="showFloatingButton" checked>
+            Show floating button
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="enableNotifications">
+            <input type="checkbox" id="enableNotifications" checked>
+            Enable notifications
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="batchSize">Batch size:</label>
+          <select id="batchSize">
+            <option value="3">3 (Conservative)</option>
+            <option value="5" selected>5 (Default)</option>
+            <option value="10">10 (Fast)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="delayMs">Delay between batches (ms):</label>
+          <input type="number" id="delayMs" value="200" min="100" max="1000" step="50">
+        </div>
+        <div class="setting-item">
+          <label for="expandReplies">
+            <input type="checkbox" id="expandReplies" checked>
+            Expand "more replies" buttons
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="expandComments">
+            <input type="checkbox" id="expandComments" checked>
+            Expand "load more comments" buttons
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="expandDeleted">
+            <input type="checkbox" id="expandDeleted" checked>
+            Expand deleted comments
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="expandCrowdControl">
+            <input type="checkbox" id="expandCrowdControl" checked>
+            Expand crowd control comments
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="expandContestMode">
+            <input type="checkbox" id="expandContestMode" checked>
+            Expand contest mode comments
+          </label>
+        </div>
+      </div>
+      
+      <!-- Debug Section -->
+      <div class="debug-section">
+        <h3>Debug & Logs</h3>
+        <button id="viewLogs" class="debug-btn">View Extension Logs</button>
+      </div>
+      
+      <!-- Upgrade Section -->
+      <div id="upgrade-section" class="upgrade-section" style="display: none;">
+        <h3>Upgrade to Pro</h3>
+        <p class="upgrade-text">Unlock unlimited expansions and advanced features</p>
+        <button id="upgrade-btn" class="upgrade-btn">Upgrade Now</button>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p class="footer-text">Works on old.reddit.com, new.reddit.com, and sh.reddit.com</p>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

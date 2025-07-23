@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Extension Icons</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .icon-preview { margin: 20px 0; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Reddit Comment Expander Pro - Icon Generator</h1>
+    <p>Use this page to generate the required icon sizes. Right-click each canvas and "Save image as" with the correct filename.</p>
+    
+    <div class="icon-preview">
+        <h3>16x16 Icon</h3>
+        <canvas id="icon16" width="16" height="16"></canvas>
+        <p>Save as: icon16.png</p>
+    </div>
+    
+    <div class="icon-preview">
+        <h3>32x32 Icon</h3>
+        <canvas id="icon32" width="32" height="32"></canvas>
+        <p>Save as: icon32.png</p>
+    </div>
+    
+    <div class="icon-preview">
+        <h3>48x48 Icon</h3>
+        <canvas id="icon48" width="48" height="48"></canvas>
+        <p>Save as: icon48.png</p>
+    </div>
+    
+    <div class="icon-preview">
+        <h3>128x128 Icon</h3>
+        <canvas id="icon128" width="128" height="128"></canvas>
+        <p>Save as: icon128.png</p>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create gradient background
+            const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+            gradient.addColorStop(0, '#ff4500');
+            gradient.addColorStop(1, '#cc3700');
+            
+            // Draw circle background
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 1, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Add subtle border
+            ctx.strokeStyle = '#e03d00';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Draw expand arrows
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = Math.max(1, size / 16);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            const center = size / 2;
+            const arrowSize = size * 0.25;
+            
+            ctx.beginPath();
+            // Vertical line
+            ctx.moveTo(center, size * 0.25);
+            ctx.lineTo(center, size * 0.75);
+            
+            // Top arrow
+            ctx.moveTo(center - arrowSize/2, size * 0.4);
+            ctx.lineTo(center, size * 0.25);
+            ctx.lineTo(center + arrowSize/2, size * 0.4);
+            
+            // Bottom arrow
+            ctx.moveTo(center - arrowSize/2, size * 0.6);
+            ctx.lineTo(center, size * 0.75);
+            ctx.lineTo(center + arrowSize/2, size * 0.6);
+            
+            ctx.stroke();
+        }
+        
+        // Generate all icon sizes
+        drawIcon(document.getElementById('icon16'), 16);
+        drawIcon(document.getElementById('icon32'), 32);
+        drawIcon(document.getElementById('icon48'), 48);
+        drawIcon(document.getElementById('icon128'), 128);
+        
+        // Add download functionality
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Add download buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const containers = document.querySelectorAll('.icon-preview');
+            containers.forEach(container => {
+                const canvas = container.querySelector('canvas');
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.onclick = () => downloadIcon(canvas.id, canvas.id + '.png');
+                downloadBtn.style.cssText = 'margin: 5px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;';
+                container.appendChild(downloadBtn);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "Reddit Comment Expander Pro",
+  "version": "1.0.0",
+  "description": "Automatically expands all Reddit comments for better browsing experience",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "*://*.reddit.com/*",
+    "*://old.reddit.com/*",
+    "*://www.reddit.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.reddit.com/*",
+        "*://old.reddit.com/*",
+        "*://www.reddit.com/*",
+        "*://sh.reddit.com/*"
+      ],
+      "js": [
+        "src/shared/feature-gates.js",
+        "src/content/reddit-detector.js",
+        "src/content/accessibility.js",
+        "src/content/expander.js",
+        "src/content/content.js"
+      ],
+      "css": ["src/content/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Reddit Comment Expander Pro",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/icons/*", "src/shared/*", "src/popup/logs.html", "src/popup/logs.js"],
+      "matches": ["*://*.reddit.com/*"]
+    }
+  ],
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
