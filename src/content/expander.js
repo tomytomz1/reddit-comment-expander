@@ -194,6 +194,25 @@ class CommentExpander {
     this.errorHandler = new ExpansionErrorHandler(); // Targeted error handling
     this.observers = new Map(); // Initialize observers Map for scroll observer
     
+    // Initialize auto-scroll and auto-expansion stats
+    this.autoScrollStats = {
+      isActive: false,
+      isComplete: false,
+      startTime: null,
+      endTime: null,
+      totalScrolls: 0,
+      lastScrollTime: null
+    };
+    
+    this.autoExpansionStats = {
+      isActive: false,
+      isComplete: false,
+      sessionStartTime: null,
+      totalProcessed: 0,
+      lastActivityTime: null,
+      currentOverlay: null
+    };
+    
     // Initialize error boundary if available
     this.errorBoundary = window.redditExpanderErrorBoundary || null;
     if (this.errorBoundary) {

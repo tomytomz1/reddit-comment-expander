@@ -60,7 +60,7 @@ class RedditCommentExpander {
       expandCrowdControl: true,
       expandContestMode: true
     };
-    this.isExpanding = false;
+    // Remove the problematic property assignment since isExpanding is a getter
     this.fab = null;
     this.statusOverlay = null;
     
