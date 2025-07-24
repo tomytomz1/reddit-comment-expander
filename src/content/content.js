@@ -8,6 +8,11 @@ class RedditCommentExpander {
     try {
       console.log('🔧 Initializing RedditCommentExpander...');
       
+      // Remove any existing upgrade prompts
+      const existingPrompts = document.querySelectorAll('.reddit-expander-upgrade-prompt');
+      existingPrompts.forEach(prompt => prompt.remove());
+      console.log(`[Init] Removed ${existingPrompts.length} existing upgrade prompts`);
+      
       // Initialize enhanced components
       this.detector = new RedditDetector();
       console.log('✅ RedditDetector initialized');
@@ -17,6 +22,13 @@ class RedditCommentExpander {
       
       this.expander = new CommentExpander(this.detector, this.accessibility);
       console.log('✅ CommentExpander initialized');
+      
+      // Set reference to this content manager in the expander
+      this.expander.contentManager = this;
+      
+      // Set up scroll observer for infinite scroll content detection
+      this.expander.setupScrollObserver();
+      console.log('✅ Scroll observer for infinite scroll set up');
       
       this.featureGates = new FeatureGates();
       console.log('✅ FeatureGates initialized');
@@ -65,8 +77,16 @@ class RedditCommentExpander {
       return false;
     }
     
-    // Check if we're on a regular comment page
-    return pathname.includes('/comments/');
+    // STRICT: Only work on actual comment pages with /comments/ in URL
+    // Do NOT work on homepage, subreddit pages, or other non-comment pages
+    if (pathname.includes('/comments/')) {
+      console.log('Detected comment thread page - enabling expansion');
+      return true;
+    }
+    
+    // Do NOT enable on homepage or other pages, even if they have expandable-looking elements
+    console.log('Not a comment page - skipping expansion for URL:', pathname);
+    return false;
   }
   
   init() {
@@ -220,8 +240,22 @@ class RedditCommentExpander {
   }
   
   setupExpander() {
+    // Re-check if we should show the button, in case expandable comments loaded after initial check
+    if (!this.isCommentPage) {
+      this.isCommentPage = this.isOnCommentPage();
+    }
+    
     if (this.isCommentPage && this.settings.showFloatingButton) {
       this.createFloatingButton();
+    }
+    
+    // NEW: If we're on a comment page, start an initial scan for expandable content
+    if (this.isCommentPage && this.expander) {
+      console.log('Starting initial scan for expandable content...');
+      // Small delay to let the page fully load
+      setTimeout(() => {
+        this.expander.scanAndExpandNewContent();
+      }, 1000);
     }
     
     // Set up event listeners for keyboard shortcuts
@@ -363,8 +397,12 @@ class RedditCommentExpander {
       respectUserPreferences: true
     };
     
-    // Use enhanced expansion engine
-    this.expander.expandAll(expansionOptions).then(() => {
+    // Use enhanced expansion engine with persistent progress window
+    this.expander.expandAll(expansionOptions).then(async () => {
+      // Start auto-scroll to load all content on the page
+      console.log('Starting auto-scroll to load all content...');
+      await this.expander.startAutoScroll();
+      
       this.isExpanding = false;
       
       // Update floating button state
@@ -415,7 +453,23 @@ class RedditCommentExpander {
       this.showNotification('Error during expansion', 'error');
     });
   }
-  
+
+  async expandScrollContent() {
+    // Manually trigger expansion of new content loaded from scrolling
+    if (this.expander) {
+      console.log('Manual expansion of scroll content triggered');
+      this.showNotification('Scanning for new scroll content...', 'info');
+      
+      try {
+        await this.expander.expandNewScrollContent();
+        this.showNotification('New scroll content expanded!', 'success');
+      } catch (error) {
+        console.error('Error expanding scroll content:', error);
+        this.showNotification('Error expanding scroll content', 'error');
+      }
+    }
+  }
+
   async loadSettings() {
     try {
       const result = await chrome.storage.sync.get([
@@ -457,6 +511,33 @@ class RedditCommentExpander {
     document.addEventListener('redditExpander:cancel', () => {
       if (this.isExpanding) {
         this.expander.cancel();
+      }
+    });
+    
+    document.addEventListener('redditExpander:pause', () => {
+      if (this.isExpanding) {
+        const success = this.expander.pause();
+        if (success) {
+          this.showNotification('Expansion paused', 'info');
+        }
+      }
+    });
+    
+    document.addEventListener('redditExpander:resume', () => {
+      if (this.isExpanding) {
+        const success = this.expander.resume();
+        if (success) {
+          this.showNotification('Expansion resumed', 'info');
+        }
+      }
+    });
+    
+    document.addEventListener('redditExpander:stop', () => {
+      if (this.isExpanding) {
+        const success = this.expander.stop();
+        if (success) {
+          this.showNotification('Expansion stopped', 'warning');
+        }
       }
     });
     
@@ -506,6 +587,7 @@ class RedditCommentExpander {
     const tierInfo = this.featureGates.getTierInfo();
     const menuItems = [
       { text: 'Expand All Comments', action: () => this.expandAllComments() },
+      { text: 'Expand New Scroll Content', action: () => this.expandScrollContent() },
       { text: 'Settings', action: () => this.showSettingsDialog() },
       { text: 'Help', action: () => this.accessibility.createHelpDialog() },
       { text: 'Cancel Expansion', action: () => this.expander.cancel() }
@@ -605,8 +687,9 @@ class RedditCommentExpander {
       <div style="margin: 16px 0;">
         <label style="display: block; margin: 8px 0;">
           <input type="checkbox" id="setting-expandDeleted" ${this.settings.expandDeleted ? 'checked' : ''} ${!isPro ? 'disabled' : ''}>
-          Expand deleted comments
+          Expand author-deleted comments
           ${!isPro ? '<span style="color: #999; font-size: 12px;"> (Pro feature)</span>' : ''}
+          <br><small style="color: #666; font-size: 11px; margin-left: 20px;">Shows comments where the author deleted their account but content remains</small>
         </label>
         <label style="display: block; margin: 8px 0;">
           <input type="checkbox" id="setting-expandCrowdControl" ${this.settings.expandCrowdControl ? 'checked' : ''} ${!isPro ? 'disabled' : ''}>

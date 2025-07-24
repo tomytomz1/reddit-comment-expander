@@ -60,6 +60,68 @@
   margin-top: 4px;
 }
 
+/* Control Button Styles */
+.control-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+}
+
+.control-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pause-btn {
+  background: #ff9800;
+}
+
+.pause-btn:hover {
+  background: #f57c00;
+}
+
+.resume-btn {
+  background: #4CAF50;
+}
+
+.resume-btn:hover {
+  background: #45a049;
+}
+
+.stop-btn {
+  background: #f44336;
+}
+
+.stop-btn:hover {
+  background: #d32f2f;
+}
+
+/* Auto-expansion progress overlay styles */
+.reddit-expander-auto-progress {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.auto-pause-btn:hover,
+.auto-stop-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Context Menu Styles */
 .reddit-expander-context-menu {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -205,6 +267,7 @@
 
 /* Premium Upgrade Popup Styles */
 .reddit-expander-upgrade-prompt.premium {
+  display: none !important; /* Hide all upgrade prompts */
   position: fixed;
   top: 50%;
   left: 50%;

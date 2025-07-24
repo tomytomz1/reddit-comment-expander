@@ -1,7 +1,7 @@
 // Feature Gating System for Reddit Comment Expander
 class FeatureGates {
   constructor() {
-    this.userTier = 'free'; // free, pro, enterprise
+    this.userTier = 'pro'; // free, pro, enterprise - Changed to pro to remove limits
     this.usageStats = {
       dailyExpansions: 0,
       lastResetDate: null,
@@ -131,27 +131,61 @@ class FeatureGates {
   }
 
   async init() {
+    // Force clear any existing free tier and set pro tier
+    try {
+      await chrome.storage.sync.set({ userTier: 'pro' });
+      await chrome.storage.local.set({ 
+        usageStats: {
+          dailyExpansions: 0,
+          lastResetDate: null,
+          totalExpansions: 0,
+          lastExpansionDate: null
+        }
+      });
+      console.log('[FeatureGates] Forced pro tier and reset usage stats');
+    } catch (error) {
+      console.error('[FeatureGates] Error setting pro tier:', error);
+    }
+    
     await this.loadUserTier();
     await this.loadUsageStats();
+    
+    // Reset usage stats for pro users to ensure unlimited access
+    if (this.userTier === 'pro') {
+      this.usageStats.dailyExpansions = 0;
+      await this.saveUsageStats();
+    }
+    
     this.checkDailyReset();
   }
 
   async loadUserTier() {
     try {
       const result = await chrome.storage.sync.get(['userTier', 'licenseKey']);
-      this.userTier = result.userTier || 'free';
+      this.userTier = result.userTier || 'pro'; // Default to pro instead of free
       
       // Validate license key if present
       if (result.licenseKey) {
         const isValid = await this.validateLicense(result.licenseKey);
         if (!isValid) {
-          this.userTier = 'free';
+          this.userTier = 'pro'; // Use pro instead of free on license validation failure
           await chrome.storage.sync.remove(['licenseKey']);
         }
       }
+      
+      // Ensure pro tier is saved to storage
+      if (this.userTier === 'pro') {
+        await chrome.storage.sync.set({ userTier: 'pro' });
+      }
     } catch (error) {
       console.error('Error loading user tier:', error);
-      this.userTier = 'free';
+      this.userTier = 'pro'; // Default to pro instead of free on error
+      // Save pro tier to storage even on error
+      try {
+        await chrome.storage.sync.set({ userTier: 'pro' });
+      } catch (saveError) {
+        console.error('Error saving pro tier:', saveError);
+      }
     }
   }
 
@@ -243,6 +277,10 @@ class FeatureGates {
 
   // Show upgrade prompt for restricted features
   showUpgradePrompt(featureName, context = '') {
+    // Disabled for pro version - no upgrade prompts
+    console.log(`[FeatureGates] Upgrade prompt suppressed for ${featureName} (Pro version)`);
+    return;
+    
     const message = this.getUpgradeMessage(featureName, context);
     
     // Create upgrade prompt

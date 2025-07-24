@@ -79,6 +79,9 @@ class AccessibilityManager {
       shortcuts: {
         'Alt+Shift+E': 'expandAll',
         'Alt+Shift+C': 'cancelExpansion',
+        'Alt+Shift+P': 'pauseExpansion', // New: pause shortcut
+        'Alt+Shift+R': 'resumeExpansion', // New: resume shortcut
+        'Alt+Shift+X': 'stopExpansion', // New: stop shortcut
         'Alt+Shift+S': 'toggleSettings',
         'Alt+Shift+H': 'toggleHelp',
         'Escape': 'cancelOperation'
@@ -126,6 +129,18 @@ class AccessibilityManager {
         this.announceToScreenReader('Cancelling expansion');
         document.dispatchEvent(new CustomEvent('redditExpander:cancel'));
         break;
+      case 'pauseExpansion':
+        this.announceToScreenReader('Pausing expansion');
+        document.dispatchEvent(new CustomEvent('redditExpander:pause'));
+        break;
+      case 'resumeExpansion':
+        this.announceToScreenReader('Resuming expansion');
+        document.dispatchEvent(new CustomEvent('redditExpander:resume'));
+        break;
+      case 'stopExpansion':
+        this.announceToScreenReader('Stopping expansion');
+        document.dispatchEvent(new CustomEvent('redditExpander:stop'));
+        break;
       case 'toggleSettings':
         this.announceToScreenReader('Opening settings');
         document.dispatchEvent(new CustomEvent('redditExpander:openSettings'));
@@ -152,7 +167,7 @@ class AccessibilityManager {
       collapsed: 'Expand collapsed comment',
       crowdControl: 'Expand crowd control hidden comment',
       contestMode: 'Expand contest mode hidden comment',
-      deleted: 'Show deleted comment',
+      deleted: 'Show author-deleted comment',
       viewRest: 'View the rest of the comments'
     };
 
@@ -182,7 +197,7 @@ class AccessibilityManager {
         collapsed: 'Comment expanded',
         crowdControl: 'Crowd control comment expanded',
         contestMode: 'Contest mode comment expanded',
-        deleted: 'Deleted comment shown',
+        deleted: 'Author-deleted comment shown',
         viewRest: 'Rest of comments loaded'
       };
       
@@ -273,7 +288,7 @@ class AccessibilityManager {
   updateStatusOverlay(overlay, status) {
     if (!overlay) return;
 
-    const { message, progress, category, timeRemaining } = status;
+    const { message, progress, category, timeRemaining, isPaused } = status;
     
     let content = `<div class="status-message">${message}</div>`;
     
@@ -296,10 +311,58 @@ class AccessibilityManager {
       content += `<div class="status-time">Estimated time: ${timeRemaining}</div>`;
     }
     
+    // Add control buttons
+    content += `
+      <div class="status-controls" style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
+        ${isPaused ? 
+          `<button id="resume-btn" class="control-btn resume-btn" aria-label="Resume expansion">
+            <span style="font-size: 12px;">▶️ Resume</span>
+          </button>` :
+          `<button id="pause-btn" class="control-btn pause-btn" aria-label="Pause expansion">
+            <span style="font-size: 12px;">⏸️ Pause</span>
+          </button>`
+        }
+        <button id="stop-btn" class="control-btn stop-btn" aria-label="Stop expansion">
+          <span style="font-size: 12px;">⏹️ Stop</span>
+        </button>
+      </div>
+    `;
+    
     overlay.innerHTML = content;
+    
+    // Add event listeners to control buttons
+    this.setupControlButtons(overlay, isPaused);
     
     // Announce to screen reader
     this.announceToScreenReader(message);
+  }
+  
+  // New: Setup control button event listeners
+  setupControlButtons(overlay, isPaused) {
+    const pauseBtn = overlay.querySelector('#pause-btn');
+    const resumeBtn = overlay.querySelector('#resume-btn');
+    const stopBtn = overlay.querySelector('#stop-btn');
+    
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('redditExpander:pause'));
+      });
+    }
+    
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('redditExpander:resume'));
+      });
+    }
+    
+    if (stopBtn) {
+      stopBtn.addEventListener('click', () => {
+        // Show confirmation for stop action
+        if (confirm('Are you sure you want to stop the expansion?')) {
+          document.dispatchEvent(new CustomEvent('redditExpander:stop'));
+        }
+      });
+    }
   }
 
   // Create accessible floating action button
@@ -312,6 +375,14 @@ class AccessibilityManager {
     button.setAttribute('tabindex', '0');
     button.innerHTML = '↕️';
     button.title = 'Expand All Comments (Alt+Shift+E)';
+    button.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1;
+      font-size: 20px;
+    `;
     
     // Add keyboard event listeners
     button.addEventListener('keydown', (event) => {
@@ -387,6 +458,9 @@ class AccessibilityManager {
         <h3>Keyboard Shortcuts</h3>
         <ul>
           <li><strong>Alt+Shift+E:</strong> Expand all comments</li>
+          <li><strong>Alt+Shift+P:</strong> Pause expansion</li>
+          <li><strong>Alt+Shift+R:</strong> Resume expansion</li>
+          <li><strong>Alt+Shift+X:</strong> Stop expansion</li>
           <li><strong>Alt+Shift+C:</strong> Cancel expansion</li>
           <li><strong>Alt+Shift+S:</strong> Open settings</li>
           <li><strong>Alt+Shift+H:</strong> Show this help</li>
@@ -400,10 +474,14 @@ class AccessibilityManager {
           <li>Continue thread discussions</li>
           <li>Handle crowd control and contest mode</li>
           <li>Screen reader compatible</li>
+          <li>Pause/Resume/Stop controls</li>
         </ul>
         
         <h3>Accessibility</h3>
         <p>This extension is designed to work with screen readers and keyboard navigation. All operations are announced to assistive technology.</p>
+        
+        <h3>Controls</h3>
+        <p>Use the floating action button or keyboard shortcuts to control expansion. Progress overlays include pause, resume, and stop buttons for fine-grained control.</p>
       </div>
       <button id="help-close" aria-label="Close help dialog">Close</button>
     `;
