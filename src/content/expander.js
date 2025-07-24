@@ -192,6 +192,7 @@ class CommentExpander {
     this.processed = new WeakSet();
     this.statusOverlay = null;
     this.errorHandler = new ExpansionErrorHandler(); // Targeted error handling
+    this.observers = new Map(); // Initialize observers Map for scroll observer
     
     // Initialize error boundary if available
     this.errorBoundary = window.redditExpanderErrorBoundary || null;
