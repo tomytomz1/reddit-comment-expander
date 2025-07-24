@@ -201,7 +201,13 @@ class CommentExpander {
       startTime: null,
       endTime: null,
       totalScrolls: 0,
-      lastScrollTime: null
+      lastScrollTime: null,
+      scrollAttempts: 0,
+      maxScrollAttempts: 10, // Maximum number of scroll attempts
+      noNewContentCount: 0,
+      maxNoNewContentCount: 3, // Maximum consecutive scrolls with no new content
+      scrollDelay: 2000, // Delay between scrolls in milliseconds
+      lastScrollHeight: 0
     };
     
     this.autoExpansionStats = {
@@ -2153,6 +2159,18 @@ class CommentExpander {
       clearInterval(this.autoScrollStats.scrollInterval);
       this.autoScrollStats.scrollInterval = null;
     }
+    
+    // Update persistent progress overlay
+    this.updatePersistentPhase(
+      'Auto-scroll stopped',
+      'User stopped auto-scroll process',
+      'warning'
+    );
+    
+    // Hide the progress overlay after a delay
+    setTimeout(() => {
+      this.hideAutoExpansionOverlay();
+    }, 3000);
   }
 
   setupAutoExpansionCompletionCheck() {
