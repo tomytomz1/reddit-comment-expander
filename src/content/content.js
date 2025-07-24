@@ -931,9 +931,6 @@ function initializeErrorBoundary() {
   }
 }
 
-// Try to initialize error boundary
-initializeErrorBoundary();
-
 // Initialize Reddit Comment Expander with comprehensive checks
 function initializeExpander() {
   try {
@@ -1076,6 +1073,12 @@ async function initializeWithRetry(maxAttempts = 3, delayMs = 1000) {
         throw new Error('Required classes not loaded within timeout');
       }
       
+      // Initialize error boundary after classes are loaded
+      const errorBoundaryInitialized = initializeErrorBoundary();
+      if (!errorBoundaryInitialized) {
+        console.warn('⚠️ Error boundary initialization failed, continuing without it');
+      }
+      
       const expander = initializeExpander();
       console.log(`✅ Initialization succeeded on attempt ${attempt}`);
       return expander;
@@ -1099,29 +1102,11 @@ function startInitialization() {
   console.log(`📄 Document ready state: ${document.readyState}`);
   console.log(`⏰ Initializing at: ${performance.now()}ms`);
   
-  if (globalErrorBoundary) {
-    globalErrorBoundary.wrap(
-      () => initializeWithRetry(3, 500),
-      {
-        operationName: 'Reddit Comment Expander Initialization',
-        retryable: true,
-        maxRetries: 1, // Error boundary provides additional retry
-        onError: async (error) => {
-          console.error('❌ Error boundary caught initialization failure');
-        },
-        onRetry: async (error, attempt) => {
-          console.log(`🔄 Error boundary retrying initialization (attempt ${attempt})`);
-        }
-      }
-    ).catch(error => {
-      console.error('💥 Final initialization failure with error boundary:', error);
-    });
-  } else {
-    // Fallback initialization without error boundary
-    initializeWithRetry(3, 500).catch(error => {
-      console.error('💥 Direct initialization failed after retries:', error);
-    });
-  }
+  // Start initialization without error boundary first
+  // Error boundary will be initialized during the process
+  initializeWithRetry(3, 500).catch(error => {
+    console.error('💥 Direct initialization failed after retries:', error);
+  });
 }
 
 // Wait for DOM to be ready if needed
