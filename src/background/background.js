@@ -41,6 +41,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.error('Initialization error:', message.error);
       break;
       
+    case 'ERROR_BOUNDARY_REPORT':
+      // Handle error boundary reports with detailed logging
+      console.group('🛡️ Error Boundary Report');
+      console.error('Error:', message.error);
+      console.log('Context:', message.context);
+      console.log('URL:', message.url);
+      console.log('Timestamp:', new Date(message.timestamp).toISOString());
+      if (message.stats) {
+        console.log('Error Statistics:', message.stats);
+      }
+      console.groupEnd();
+      
+      // Store error for analytics (optional)
+      try {
+        chrome.storage.local.get(['errorReports'], (result) => {
+          const reports = result.errorReports || [];
+          reports.push({
+            ...message,
+            reportedAt: Date.now()
+          });
+          
+          // Keep only last 100 error reports
+          if (reports.length > 100) {
+            reports.splice(0, reports.length - 100);
+          }
+          
+          chrome.storage.local.set({ errorReports: reports });
+        });
+      } catch (storageError) {
+        console.warn('Failed to store error report:', storageError);
+      }
+      break;
+      
+    case 'PING':
+      // Health check for extension context
+      sendResponse({ status: 'ok', timestamp: Date.now() });
+      break;
+      
     case 'GET_SETTINGS':
       chrome.storage.sync.get(['autoExpand', 'showFloatingButton', 'enableNotifications'], (result) => {
         sendResponse(result);

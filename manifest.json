@@ -29,6 +29,8 @@
         "*://sh.reddit.com/*"
       ],
       "js": [
+        "src/shared/error-boundary.js",
+        "src/shared/expansion-state.js",
         "src/shared/feature-gates.js",
         "src/content/reddit-detector.js",
         "src/content/accessibility.js",

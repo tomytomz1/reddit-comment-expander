@@ -5,107 +5,432 @@
  * 
  * Note: AbortError handling: During rapid comment expansion, Reddit's internal
  * components may abort requests (for user flair, icons, etc.) when the DOM
- * changes rapidly. These AbortErrors are expected and handled silently to
- * prevent console spam. This is normal behavior and doesn't affect functionality.
+ * changes rapidly. These AbortErrors are tracked and logged at debug level
+ * during expansion operations to prevent console spam while preserving visibility.
  */
 
-// Global AbortError suppression
-(function() {
-  const originalConsoleError = console.error;
-  console.error = function(...args) {
-    // Suppress AbortError messages from Reddit's internal components
-    if (args[0] && typeof args[0] === 'string' && args[0].includes('AbortError')) {
-      return; // Silently ignore AbortErrors
-    }
-    originalConsoleError.apply(console, args);
-  };
+console.log('📦 Loading expander.js');
+window.REDDIT_EXPANDER_EXPANDER_LOADED = true;
 
-  // Suppress unhandled promise rejections for AbortErrors
-  const originalAddEventListener = window.addEventListener;
-  window.addEventListener = function(type, listener, options) {
-    if (type === 'unhandledrejection') {
-      const wrappedListener = function(event) {
-        const reason = event.reason;
-        if (reason && reason.name === 'AbortError') {
-          event.preventDefault();
-          return; // Suppress AbortError unhandled rejections
-        }
-        listener.call(this, event);
-      };
-      return originalAddEventListener.call(this, type, wrappedListener, options);
-    }
-    return originalAddEventListener.call(this, type, listener, options);
-  };
+// Utility Classes (defined first to avoid hoisting issues)
 
-  // Suppress specific Reddit component errors
-  const originalConsoleWarn = console.warn;
-  console.warn = function(...args) {
-    const message = args[0];
-    if (typeof message === 'string') {
-      // Suppress specific Reddit component warnings
-      if (message.includes('AbortError') || 
-          message.includes('user-flair') || 
-          message.includes('select-controller') ||
-          message.includes('icon-') ||
-          message.includes('sentry-')) {
-        return; // Silently ignore these specific errors
+// Priority Queue for managing expansion order
+class PriorityQueue {
+  constructor() {
+    this.items = [];
+  }
+
+  enqueue(item) {
+    this.items.push(item);
+    this.items.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return b.priority - a.priority; // Higher priority first
+      }
+      return b.visible - a.visible; // Visible items first
+    });
+  }
+
+  dequeue() {
+    return this.items.shift();
+  }
+
+  dequeueBatch(size) {
+    const batch = [];
+    for (let i = 0; i < size && this.items.length > 0; i++) {
+      batch.push(this.dequeue());
+    }
+    return batch;
+  }
+
+  peek() {
+    return this.items[0];
+  }
+
+  size() {
+    return this.items.length;
+  }
+
+  isEmpty() {
+    return this.items.length === 0;
+  }
+
+  clear() {
+    this.items = [];
+  }
+}
+
+// Adaptive Rate Limiter
+class AdaptiveRateLimiter {
+  constructor() {
+    this.baseDelay = 300; // Increased from 100ms for more conservative expansion
+    this.maxDelay = 3000; // Increased from 2000ms
+    this.currentDelay = this.baseDelay;
+    this.failureCount = 0;
+    this.successCount = 0;
+  }
+
+  async waitIfNeeded() {
+    try {
+      await new Promise(resolve => setTimeout(resolve, this.currentDelay));
+    } catch (error) {
+      // AbortError is expected during rapid expansion - handle silently
+      if (error.name !== 'AbortError') {
+        console.warn('Rate limiter error:', error);
       }
     }
-    originalConsoleWarn.apply(console, args);
-  };
-})();
+  }
+
+  onSuccess() {
+    this.successCount++;
+    if (this.successCount >= 5) { // Increased from 3 for more stability
+      this.currentDelay = Math.max(this.baseDelay, this.currentDelay * 0.95); // More conservative reduction
+      this.successCount = 0;
+      this.failureCount = 0;
+    }
+  }
+
+  onFailure() {
+    this.failureCount++;
+    this.currentDelay = Math.min(this.maxDelay, this.currentDelay * 1.3); // More aggressive increase
+    this.successCount = 0;
+  }
+
+  onRateLimit() {
+    this.currentDelay = this.maxDelay;
+    this.failureCount = 0;
+    this.successCount = 0;
+  }
+}
+
+// Targeted AbortError Handler - only active during expansion operations
+class ExpansionErrorHandler {
+  constructor() {
+    this.isExpansionActive = false;
+    this.abortErrorCount = 0;
+    this.lastAbortErrorTime = 0;
+    this.setupTargetedHandler();
+  }
+
+  setupTargetedHandler() {
+    // Handle unhandled promise rejections during expansion only
+    window.addEventListener('unhandledrejection', (event) => {
+      if (this.isExpansionActive && event.reason && event.reason.name === 'AbortError') {
+        event.preventDefault();
+        this.logAbortError('Unhandled promise rejection', event.reason);
+      }
+    });
+  }
+
+  startExpansion() {
+    this.isExpansionActive = true;
+    this.abortErrorCount = 0;
+    console.debug('[ExpansionErrorHandler] Started tracking expansion-related errors');
+  }
+
+  endExpansion() {
+    this.isExpansionActive = false;
+    if (this.abortErrorCount > 0) {
+      console.debug(`[ExpansionErrorHandler] Expansion complete. Tracked ${this.abortErrorCount} AbortErrors`);
+    }
+  }
+
+  logAbortError(context, error) {
+    this.abortErrorCount++;
+    this.lastAbortErrorTime = Date.now();
+    
+    // Log at debug level instead of suppressing completely
+    console.debug(`[ExpansionErrorHandler] AbortError during expansion (${context}):`, {
+      count: this.abortErrorCount,
+      error: error.message || error,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Wrapper for operations that might trigger AbortErrors
+  async executeWithAbortHandling(operation, context = 'unknown') {
+    try {
+      return await operation();
+    } catch (error) {
+      if (this.isExpansionActive && error.name === 'AbortError') {
+        this.logAbortError(context, error);
+        // Don't rethrow AbortErrors during expansion
+        return null;
+      }
+      // Rethrow all other errors normally
+      throw error;
+    }
+  }
+
+  // Check if error is an expansion-related AbortError
+  isExpansionAbortError(error) {
+    return this.isExpansionActive && 
+           error && 
+           (error.name === 'AbortError' || 
+            (typeof error === 'string' && error.includes('AbortError')));
+  }
+}
 
 // Enhanced Comment Expansion Engine
 class CommentExpander {
   constructor(detector, accessibility) {
     this.detector = detector;
     this.accessibility = accessibility;
-    this.isExpanding = false;
-    this.shouldCancel = false;
-    this.isPaused = false; // New: pause state
-    this.isResuming = false; // New: resume state
-    this.pauseResolver = null; // New: for pause/resume control
+    
+    // Initialize centralized state manager
+    this.state = new ExpansionState({
+      enablePersistence: true,
+      persistenceKey: 'reddit-expander-state',
+      enableLogging: true,
+      maxErrorHistory: 50
+    });
+    
+    // Legacy support properties (computed from state)
+    // These will be removed gradually as code is refactored
+    
     this.queue = new PriorityQueue();
     this.rateLimiter = new AdaptiveRateLimiter();
     this.processed = new WeakSet();
-    this.observers = new Map();
     this.statusOverlay = null;
-    this.abortErrorCount = 0; // Track AbortError frequency
-    this.lastAbortErrorTime = 0; // Track when last AbortError occurred
+    this.errorHandler = new ExpansionErrorHandler(); // Targeted error handling
     
-    // NEW: Auto-expansion cumulative tracking
-    this.autoExpansionStats = {
-      totalProcessed: 0,
-      sessionStartTime: 0,
-      currentOverlay: null,
-      isActive: false,
-      lastActivityTime: 0,
-      completionCheckTimer: null
+    // Initialize error boundary if available
+    this.errorBoundary = window.redditExpanderErrorBoundary || null;
+    if (this.errorBoundary) {
+      console.log('✅ CommentExpander integrated with global error boundary');
+    }
+    
+    // Set up state change observers for UI updates
+    this.setupStateObservers();
+    
+    // Set Reddit version in state
+    this.state.updateState({
+      redditVersion: this.detector.version
+    });
+    
+    console.log('Comment Expander initialized with state manager');
+  }
+
+  // Legacy property getters for backward compatibility
+  get isExpanding() {
+    return this.state.getStatus() === ExpansionStatus.EXPANDING;
+  }
+
+  get shouldCancel() {
+    return this.state.getStatus() === ExpansionStatus.CANCELLED;
+  }
+
+  get isPaused() {
+    return this.state.getStatus() === ExpansionStatus.PAUSED;
+  }
+
+  get isResuming() {
+    const state = this.state.getState();
+    return state.status === ExpansionStatus.EXPANDING && 
+           state.previousStatus === ExpansionStatus.PAUSED;
+  }
+
+  get stats() {
+    const stateData = this.state.getState();
+    return {
+      startTime: stateData.progress.startTime,
+      endTime: stateData.progress.endTime,
+      expanded: stateData.progress.successful,
+      failed: stateData.progress.failed,
+      retries: stateData.errors.length,
+      categories: stateData.categories
     };
+  }
+
+  /**
+   * Set up observers for state changes to update UI and handle events
+   */
+  setupStateObservers() {
+    // Subscribe to status changes
+    this.state.subscribe(StateEventTypes.STATUS_CHANGED, (state, event) => {
+      this.handleStatusChange(state.status, state.previousStatus, event);
+    });
+
+    // Subscribe to progress updates
+    this.state.subscribe(StateEventTypes.PROGRESS_UPDATED, (state, event) => {
+      this.handleProgressUpdate(state.progress, event);
+    });
+
+    // Subscribe to errors
+    this.state.subscribe(StateEventTypes.ERROR_ADDED, (state, event) => {
+      this.handleErrorAdded(state.lastError, event);
+    });
+
+    console.log('State observers set up');
+  }
+
+  /**
+   * Handle status changes
+   */
+  handleStatusChange(newStatus, previousStatus, event) {
+    console.log(`Status changed: ${previousStatus} → ${newStatus}`);
     
-    // NEW: Auto-scroll tracking
-    this.autoScrollStats = {
-      isActive: false,
-      scrollAttempts: 0,
-      maxScrollAttempts: 10, // Maximum number of scroll attempts
-      lastScrollHeight: 0,
-      noNewContentCount: 0,
-      maxNoNewContentCount: 3, // Stop if no new content for 3 consecutive scrolls
-      scrollInterval: null,
-      scrollDelay: 2000, // Wait 2 seconds between scrolls
-      isComplete: false
-    };
+    // Update accessibility announcements
+    switch (newStatus) {
+      case ExpansionStatus.EXPANDING:
+        this.accessibility.announceToScreenReader('Comment expansion started');
+        this.errorHandler.startExpansion();
+        break;
+      case ExpansionStatus.PAUSED:
+        this.accessibility.announceToScreenReader('Comment expansion paused');
+        break;
+      case ExpansionStatus.COMPLETE:
+        this.accessibility.announceCompletion(this.stats);
+        this.errorHandler.endExpansion();
+        break;
+      case ExpansionStatus.ERROR:
+        this.accessibility.announceToScreenReader('Comment expansion encountered an error');
+        this.errorHandler.endExpansion();
+        break;
+      case ExpansionStatus.CANCELLED:
+        this.accessibility.announceToScreenReader('Comment expansion cancelled');
+        this.errorHandler.endExpansion();
+        break;
+    }
+
+    // Update UI elements if they exist
+    this.updateUIForStatus(newStatus);
+  }
+
+  /**
+   * Handle progress updates
+   */
+  handleProgressUpdate(progress, event) {
+    // Update persistent progress overlay if it exists
+    this.updatePersistentProgress();
     
-    this.stats = {
-      startTime: 0,
-      endTime: 0,
-      expanded: 0,
-      failed: 0,
-      retries: 0,
-      categories: {}
-    };
+    // Announce progress to accessibility tools periodically
+    if (progress.processed % 10 === 0) { // Every 10 elements
+      this.accessibility.announceProgress(
+        progress.processed, 
+        progress.total, 
+        progress.currentCategory || 'comments'
+      );
+    }
+  }
+
+  /**
+   * Handle errors being added
+   */
+  handleErrorAdded(error, event) {
+    console.warn('Error added to state:', error);
     
-    console.log('Comment Expander initialized');
+    // Announce error to accessibility tools if it's significant
+    if (error.context && !error.context.suppressAccessibility) {
+      this.accessibility.announceError(error.error.message, error.context.operationName || 'expansion');
+    }
+  }
+
+  /**
+   * Update UI elements based on status
+   */
+  updateUIForStatus(status) {
+    // Update floating button if it exists
+    const fab = document.getElementById('reddit-comment-expander-fab');
+    if (fab && this.accessibility) {
+      this.accessibility.updateFloatingButtonAccessibility(fab, status);
+    }
+
+    // Update status overlay
+    if (this.statusOverlay) {
+      this.updateStatusOverlay(status);
+    }
+  }
+
+  /**
+   * Pause expansion
+   */
+  pause(reason = 'User requested') {
+    if (this.state.getStatus() === ExpansionStatus.EXPANDING) {
+      this.state.setStatus(ExpansionStatus.PAUSED, reason);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Resume expansion
+   */
+  resume() {
+    if (this.state.getStatus() === ExpansionStatus.PAUSED) {
+      this.state.setStatus(ExpansionStatus.EXPANDING);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Cancel expansion
+   */
+  cancel() {
+    const currentStatus = this.state.getStatus();
+    if (currentStatus === ExpansionStatus.EXPANDING || currentStatus === ExpansionStatus.PAUSED) {
+      this.state.setStatus(ExpansionStatus.CANCELLED);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Stop expansion (alias for cancel)
+   */
+  stop() {
+    return this.cancel();
+  }
+
+  /**
+   * Get expansion statistics
+   */
+  getStats() {
+    return this.stats; // Uses the getter which pulls from state
+  }
+
+  /**
+   * Get current state summary
+   */
+  getStateSummary() {
+    return this.state.getStateSummary();
+  }
+
+  /**
+   * Clean up state manager
+   */
+  cleanup() {
+    // Existing cleanup code...
+    if (this.accessibility) {
+      this.accessibility.cleanup();
+    }
+    
+    // Clean up state manager
+    if (this.state) {
+      this.state.destroy();
+    }
+    
+    // Remove other elements...
+    if (this.fab) {
+      this.fab.remove();
+      this.fab = null;
+    }
+    
+    if (this.statusOverlay) {
+      this.statusOverlay.remove();
+      this.statusOverlay = null;
+    }
+    
+    // Cleanup observers...
+    if (this.contentObserver) {
+      this.contentObserver.disconnect();
+      this.contentObserver = null;
+    }
+    
+    if (this.navigationCheckTimeout) {
+      clearTimeout(this.navigationCheckTimeout);
+      this.navigationCheckTimeout = null;
+    }
   }
 
   async expandAll(options = {}) {
@@ -114,6 +439,26 @@ class CommentExpander {
       this.accessibility.announceToScreenReader('Expansion already in progress');
       return;
     }
+
+    // Use error boundary if available for the entire expansion process
+    if (this.errorBoundary) {
+      return this.errorBoundary.wrap(
+        () => this._expandAllInternal(options),
+        {
+          operationName: 'Comment Expansion Process',
+          retryable: false, // Don't auto-retry full expansions
+          onError: (error) => {
+            this.state.setStatus(ExpansionStatus.ERROR);
+            this.state.addError(error, { operationName: 'expansion process' });
+          }
+        }
+      );
+    } else {
+      return this._expandAllInternal(options);
+    }
+  }
+
+  async _expandAllInternal(options = {}) {
 
     const {
       expandDeleted = false, // Default to false for free tier
@@ -125,14 +470,11 @@ class CommentExpander {
       maxTime = 300000 // 5 minutes max
     } = options;
 
-    // Initialize expansion
-    this.isExpanding = true;
-    this.shouldCancel = false;
-    this.stats.startTime = performance.now();
-    this.stats.expanded = 0;
-    this.stats.failed = 0;
-    this.stats.retries = 0;
-    this.stats.categories = {};
+    // Scan for expandable elements first
+    const expandableElements = this.detector.getAllExpandableElements();
+    
+    // Initialize expansion using state manager
+    this.state.initializeExpansion(expandableElements, options);
     this.processed = new WeakSet();
     this.queue.clear();
     
@@ -257,15 +599,27 @@ class CommentExpander {
       
       // Keep scroll observer running for infinite scroll content
       console.log('Main expansion complete, but scroll observer will continue monitoring for new content...');
-      this.isExpanding = false; // Mark main expansion as complete
       
-      this.accessibility.announceCompletion(this.stats);
+      // Mark expansion as complete using state manager
+      this.state.completeExpansion();
+      
+      // Note: accessibility announcements are now handled by state observers
       
     } catch (error) {
-      console.error('Error during expansion:', error);
-      this.accessibility.announceError(error.message, 'expansion');
+      // Handle expansion errors, checking if it's an expected AbortError
+      if (!this.errorHandler.isExpansionAbortError(error)) {
+        console.error('Error during expansion:', error);
+        this.state.setStatus(ExpansionStatus.ERROR);
+        this.state.addError(error, { operationName: 'expansion main loop' });
+      }
     } finally {
-      this.isExpanding = false;
+      // Ensure we're in a terminal state if not already
+      const currentStatus = this.state.getStatus();
+      if (currentStatus === ExpansionStatus.EXPANDING) {
+        this.state.setStatus(ExpansionStatus.COMPLETE);
+      }
+      
+      // Clean up - accessibility restoration handled by state observers
       this.accessibility.restoreFocusAfterExpansion();
       
       // Don't remove the overlay here - it will be managed by the auto-expansion process
@@ -331,34 +685,40 @@ class CommentExpander {
         const success = await this.expandElement(item.element, item.category);
         // Debug: log after calling expandElement
         console.log('[Expander] expandElement result:', success, item.category, item.element.outerHTML);
+        
+        // Record result in state manager
+        this.state.recordElementResult(item.category, success);
+        
         if (success) {
-          this.stats.expanded++;
           this.rateLimiter.onSuccess();
           // Mark as processed to prevent reprocessing
           item.element.dataset.redditExpanderProcessed = 'true';
         } else {
-          this.stats.failed++;
           this.rateLimiter.onFailure();
         }
         results.push({ element: item.element, success });
-        // Update progress less frequently to reduce overhead
-        if (this.stats.expanded % 5 === 0) {
-          await this.updateProgress();
-        }
         // Yield to browser more frequently to prevent blocking
         await this.yieldToBrowser();
       } catch (error) {
         // Handle AbortError silently - this is expected during rapid expansion
         if (error.name === 'AbortError') {
           this.trackAbortError();
-          this.stats.failed++;
+          // Record failure in state manager
+          this.state.recordElementResult(item.category, false);
           this.rateLimiter.onFailure();
           results.push({ element: item.element, success: false });
           continue;
         }
         // Debug: log any other error
         console.error('[Expander] Error processing batch item:', error, item.category, item.element.outerHTML);
-        this.stats.failed++;
+        
+        // Record error and failure in state manager
+        this.state.addError(error, { 
+          operationName: 'element processing',
+          category: item.category,
+          element: item.element.tagName
+        });
+        this.state.recordElementResult(item.category, false);
         this.rateLimiter.onFailure();
         results.push({ element: item.element, success: false });
       }
@@ -492,32 +852,33 @@ class CommentExpander {
     // Add a longer delay before clicking to let Reddit's components settle
     await new Promise(resolve => setTimeout(resolve, 150));
     
-    // Click the expand button with better error handling
+    // Click the expand button with targeted error handling
     try {
-      // Use a more robust click method
-      if (expandButton.click) {
-        expandButton.click();
-      } else if (expandButton.dispatchEvent) {
-        expandButton.dispatchEvent(new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          view: window
-        }));
-      }
-      
-      // Wait for expansion to complete with longer timeout
-      await this.waitForExpansion(expandButton, 4000);
-      
-      // Add a delay after expansion to let Reddit's components settle
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Use error handler wrapper for the click operation
+      await this.errorHandler.executeWithAbortHandling(async () => {
+        // Use a more robust click method
+        if (expandButton.click) {
+          expandButton.click();
+        } else if (expandButton.dispatchEvent) {
+          expandButton.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          }));
+        }
+        
+        // Wait for expansion to complete with longer timeout
+        await this.waitForExpansion(expandButton, 4000);
+        
+        // Add a delay after expansion to let Reddit's components settle
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }, 'expand button click');
       
     } catch (error) {
-      // Handle AbortError and other errors silently
-      if (error.name === 'AbortError') {
-        // This is expected when Reddit aborts requests during rapid expansion
-        return false;
+      // Only log non-AbortError issues
+      if (!this.errorHandler.isExpansionAbortError(error)) {
+        console.warn('Error during button click:', error);
       }
-      console.warn('Error during button click:', error);
       return false;
     }
     
@@ -527,64 +888,67 @@ class CommentExpander {
   async expandMoreComments(element) {
     // Handle "load more comments" buttons/links and faceplate-partial elements
     try {
-      if (element.tagName === 'FACEPLATE-PARTIAL') {
-        // For faceplate-partial elements (like top-level-more-comments-partial)
-        const button = element.querySelector('button');
-        if (button) {
-          console.log('[Expander] Clicking button inside faceplate-partial:', button.outerHTML);
-          button.click();
-          await this.waitForExpansion(element, 4000);
-          return true;
+      return await this.errorHandler.executeWithAbortHandling(async () => {
+        if (element.tagName === 'FACEPLATE-PARTIAL') {
+          // For faceplate-partial elements (like top-level-more-comments-partial)
+          const button = element.querySelector('button');
+          if (button) {
+            console.log('[Expander] Clicking button inside faceplate-partial:', button.outerHTML);
+            button.click();
+            await this.waitForExpansion(element, 4000);
+            return true;
+          }
+          // If no button, try to trigger the partial loading directly
+          if (element.click) {
+            console.log('[Expander] Clicking faceplate-partial directly:', element.outerHTML);
+            element.click();
+            await this.waitForExpansion(element, 4000);
+            return true;
+          }
+        } else if (element.tagName === 'A') {
+          // For anchor links, check if it's a "more replies" or "more comments" link
+          const href = element.href;
+          const hasJoinOutline = element.querySelector('svg[icon-name="join-outline"]');
+          const hasMoreRepliesText = element.textContent && element.textContent.toLowerCase().includes('more replies');
+          const hasMoreCommentsSlot = element.getAttribute('slot') === 'more-comments-permalink';
+          const hasPermalinkId = element.id && element.id.includes('comments-permalink');
+          
+          // If it's a "more replies" link (has join-outline icon or specific attributes), click it
+          if (hasJoinOutline || hasMoreRepliesText || hasMoreCommentsSlot || hasPermalinkId) {
+            console.log('[Expander] Clicking more replies anchor link:', element.outerHTML.substring(0, 150) + '...');
+            element.click();
+            await this.waitForExpansion(element, 3000);
+            return true;
+          }
+          // For other links, use the original logic (avoid navigation)
+          else if (href && !href.includes('/comment/')) {
+            console.log('[Expander] Clicking general anchor link:', element.outerHTML.substring(0, 150) + '...');
+            element.click();
+            await this.waitForExpansion(element);
+            return true;
+          }
+        } else if (element.tagName === 'BUTTON') {
+          // Handle standalone buttons with join-outline icons
+          const hasJoinOutline = element.querySelector('svg[icon-name="join-outline"]');
+          
+          if (hasJoinOutline) {
+            console.log('[Expander] Clicking standalone button with join-outline:', element.outerHTML.substring(0, 150) + '...');
+            element.click();
+            await this.waitForExpansion(element, 3000);
+            return true;
+          } else {
+            // Handle other types of buttons (like "View more comments")
+            console.log('[Expander] Clicking general button:', element.outerHTML.substring(0, 150) + '...');
+            element.click();
+            await this.waitForExpansion(element);
+            return true;
+          }
         }
-        // If no button, try to trigger the partial loading directly
-        if (element.click) {
-          console.log('[Expander] Clicking faceplate-partial directly:', element.outerHTML);
-          element.click();
-          await this.waitForExpansion(element, 4000);
-          return true;
-        }
-      } else if (element.tagName === 'A') {
-        // For anchor links, check if it's a "more replies" or "more comments" link
-        const href = element.href;
-        const hasJoinOutline = element.querySelector('svg[icon-name="join-outline"]');
-        const hasMoreRepliesText = element.textContent && element.textContent.toLowerCase().includes('more replies');
-        const hasMoreCommentsSlot = element.getAttribute('slot') === 'more-comments-permalink';
-        const hasPermalinkId = element.id && element.id.includes('comments-permalink');
-        
-        // If it's a "more replies" link (has join-outline icon or specific attributes), click it
-        if (hasJoinOutline || hasMoreRepliesText || hasMoreCommentsSlot || hasPermalinkId) {
-          console.log('[Expander] Clicking more replies anchor link:', element.outerHTML.substring(0, 150) + '...');
-          element.click();
-          await this.waitForExpansion(element, 3000);
-          return true;
-        }
-        // For other links, use the original logic (avoid navigation)
-        else if (href && !href.includes('/comment/')) {
-          console.log('[Expander] Clicking general anchor link:', element.outerHTML.substring(0, 150) + '...');
-          element.click();
-          await this.waitForExpansion(element);
-          return true;
-        }
-      } else if (element.tagName === 'BUTTON') {
-        // Handle standalone buttons with join-outline icons
-        const hasJoinOutline = element.querySelector('svg[icon-name="join-outline"]');
-        
-        if (hasJoinOutline) {
-          console.log('[Expander] Clicking standalone button with join-outline:', element.outerHTML.substring(0, 150) + '...');
-          element.click();
-          await this.waitForExpansion(element, 3000);
-          return true;
-        } else {
-          // Handle other types of buttons (like "View more comments")
-          console.log('[Expander] Clicking general button:', element.outerHTML.substring(0, 150) + '...');
-          element.click();
-          await this.waitForExpansion(element);
-          return true;
-        }
-      }
+        return false;
+      }, 'more comments expansion');
     } catch (error) {
-      // Handle AbortError silently
-      if (error.name !== 'AbortError') {
+      // Only log non-AbortError issues
+      if (!this.errorHandler.isExpansionAbortError(error)) {
         console.warn('Error during more comments expansion:', error);
       }
     }
@@ -595,43 +959,45 @@ class CommentExpander {
   async expandContinueThread(element) {
     // Handle "Continue this thread" links and faceplate-partial elements
     try {
-      if (element.tagName === 'FACEPLATE-PARTIAL') {
-        // Check if there's a button inside the faceplate-partial
-        const button = element.querySelector('button');
-        if (button) {
-          button.click();
-          await this.waitForExpansion(element, 3000);
-          return true;
-        }
-        // If no button, try to trigger the partial loading
-        if (element.click) {
+      return await this.errorHandler.executeWithAbortHandling(async () => {
+        if (element.tagName === 'FACEPLATE-PARTIAL') {
+          // Check if there's a button inside the faceplate-partial
+          const button = element.querySelector('button');
+          if (button) {
+            button.click();
+            await this.waitForExpansion(element, 3000);
+            return true;
+          }
+          // If no button, try to trigger the partial loading
+          if (element.click) {
+            element.click();
+            await this.waitForExpansion(element, 3000);
+            return true;
+          }
+        } else if (element.tagName === 'A' && element.href) {
+          // Check if the link is still valid and not already processed
+          if (element.classList.contains('processed') || element.disabled) {
+            return false;
+          }
+          
+          // Mark as processed to avoid duplicate clicks
+          element.classList.add('processed');
+          
+          // For now, just click the link
+          // In the future, we could implement inline loading
           element.click();
-          await this.waitForExpansion(element, 3000);
+          
+          // Wait for expansion with shorter timeout
+          await this.waitForExpansion(element, 2000);
           return true;
         }
-      } else if (element.tagName === 'A' && element.href) {
-        // Check if the link is still valid and not already processed
-        if (element.classList.contains('processed') || element.disabled) {
-          return false;
-        }
-        
-        // Mark as processed to avoid duplicate clicks
-        element.classList.add('processed');
-        
-        // For now, just click the link
-        // In the future, we could implement inline loading
-        element.click();
-        
-        // Wait for expansion with shorter timeout
-        await this.waitForExpansion(element, 2000);
-        return true;
-      }
-    } catch (error) {
-      // Handle AbortError silently - this is expected during rapid expansion
-      if (error.name === 'AbortError') {
         return false;
+      }, 'continue thread expansion');
+    } catch (error) {
+      // Only log non-AbortError issues
+      if (!this.errorHandler.isExpansionAbortError(error)) {
+        console.warn('Error during continue thread expansion:', error);
       }
-      console.warn('Error during continue thread expansion:', error);
     }
     
     return false;
@@ -664,14 +1030,17 @@ class CommentExpander {
   async expandGeneric(element) {
     // Generic expansion for unknown element types
     try {
-      if (element.click) {
-        element.click();
-        await this.waitForExpansion(element);
-        return true;
-      }
+      return await this.errorHandler.executeWithAbortHandling(async () => {
+        if (element.click) {
+          element.click();
+          await this.waitForExpansion(element);
+          return true;
+        }
+        return false;
+      }, 'generic expansion');
     } catch (error) {
-      // Handle AbortError silently
-      if (error.name !== 'AbortError') {
+      // Only log non-AbortError issues
+      if (!this.errorHandler.isExpansionAbortError(error)) {
         console.warn('Error during generic expansion:', error);
       }
     }
@@ -909,13 +1278,16 @@ class CommentExpander {
           // Mark as processed to avoid double-processing
           button.dataset.redditExpanderProcessed = 'true';
           
-          // Click the button
-          try {
+          // Click the button with targeted error handling
+          await this.errorHandler.executeWithAbortHandling(async () => {
             button.click();
             await this.waitForExpansion(button, 3000);
-          } catch (error) {
-            console.log('[Expander] Error processing missed button:', error);
-          }
+          }, 'missed button processing').catch(error => {
+            // Only log non-AbortError issues
+            if (!this.errorHandler.isExpansionAbortError(error)) {
+              console.log('[Expander] Error processing missed button:', error);
+            }
+          });
         }, index * 200); // Stagger the clicks
       });
     }
@@ -2549,98 +2921,12 @@ class CommentExpander {
 }
 
 // Priority Queue implementation
-class PriorityQueue {
-  constructor() {
-    this.items = [];
-  }
-
-  enqueue(item) {
-    this.items.push(item);
-    this.items.sort((a, b) => {
-      if (a.priority !== b.priority) {
-        return b.priority - a.priority; // Higher priority first
-      }
-      return b.visible - a.visible; // Visible items first
-    });
-  }
-
-  dequeue() {
-    return this.items.shift();
-  }
-
-  dequeueBatch(size) {
-    const batch = [];
-    for (let i = 0; i < size && this.items.length > 0; i++) {
-      batch.push(this.dequeue());
-    }
-    return batch;
-  }
-
-  peek() {
-    return this.items[0];
-  }
-
-  size() {
-    return this.items.length;
-  }
-
-  isEmpty() {
-    return this.items.length === 0;
-  }
-
-  clear() {
-    this.items = [];
-  }
-}
-
-// Adaptive Rate Limiter
-class AdaptiveRateLimiter {
-  constructor() {
-    this.baseDelay = 300; // Increased from 100ms for more conservative expansion
-    this.maxDelay = 3000; // Increased from 2000ms
-    this.currentDelay = this.baseDelay;
-    this.failureCount = 0;
-    this.successCount = 0;
-  }
-
-  async waitIfNeeded() {
-    try {
-      await new Promise(resolve => setTimeout(resolve, this.currentDelay));
-    } catch (error) {
-      // AbortError is expected during rapid expansion - handle silently
-      if (error.name !== 'AbortError') {
-        console.warn('Rate limiter error:', error);
-      }
-    }
-  }
-
-  onSuccess() {
-    this.successCount++;
-    if (this.successCount >= 5) { // Increased from 3 for more stability
-      this.currentDelay = Math.max(this.baseDelay, this.currentDelay * 0.95); // More conservative reduction
-      this.successCount = 0;
-      this.failureCount = 0;
-    }
-  }
-
-  onFailure() {
-    this.failureCount++;
-    this.currentDelay = Math.min(this.maxDelay, this.currentDelay * 1.3); // More aggressive increase
-    this.successCount = 0;
-  }
-
-  onRateLimit() {
-    this.currentDelay = this.maxDelay;
-    this.failureCount = 0;
-    this.successCount = 0;
-  }
-}
-
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { CommentExpander, PriorityQueue, AdaptiveRateLimiter };
+  module.exports = { CommentExpander, PriorityQueue, AdaptiveRateLimiter, ExpansionErrorHandler };
 } else {
   window.CommentExpander = CommentExpander;
   window.PriorityQueue = PriorityQueue;
   window.AdaptiveRateLimiter = AdaptiveRateLimiter;
+  window.ExpansionErrorHandler = ExpansionErrorHandler;
 } 
