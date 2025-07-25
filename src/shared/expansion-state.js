@@ -788,3 +788,18 @@ if (typeof module !== 'undefined' && module.exports) {
   window.ExpansionStatus = ExpansionStatus;
   window.StateEventTypes = StateEventTypes;
 }
+
+// Force global exposure for testing  
+console.log('🔧 [ExpansionState] Attempting to expose globally...');
+try {
+  if (typeof window !== 'undefined') {
+    window.ExpansionState = ExpansionState;
+    window.expansionState = new ExpansionState();
+    console.log('✅ [ExpansionState] Successfully exposed to window.ExpansionState and window.expansionState');
+    console.log('🔍 [ExpansionState] Instance status:', window.expansionState.getState().status);
+  } else {
+    console.error('❌ [ExpansionState] Window object not available');
+  }
+} catch (error) {
+  console.error('❌ [ExpansionState] Failed to expose globally:', error);
+}

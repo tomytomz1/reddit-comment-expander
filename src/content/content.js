@@ -906,217 +906,295 @@ class RedditCommentExpander {
   }
 }
 
-// Initialize global error boundary with safety check
-let globalErrorBoundary = null;
+// Bulletproof Error Boundary Initialization System
+class ErrorBoundaryManager {
+  constructor() {
+    this.maxWaitTime = 10000; // 10 seconds max wait
+    this.checkInterval = 50; // Check every 50ms
+    this.retryAttempts = 0;
+    this.maxRetries = 5;
+    this.errorBoundary = null;
+    this.initializationPromise = null;
+  }
 
-function initializeErrorBoundary() {
-  if (typeof ErrorBoundary !== 'undefined') {
-    try {
-      globalErrorBoundary = new ErrorBoundary({
-        enableUserNotifications: true,
-        enableRuntimeReporting: true,
-        enableConsoleLogging: true,
-        maxRetryAttempts: 2,
-        retryDelay: 1000
-      });
-      console.log('✅ Error boundary initialized');
-      return true;
-    } catch (error) {
-      console.error('❌ Error boundary initialization failed:', error);
-      return false;
+  async ensureErrorBoundary() {
+    if (this.errorBoundary) {
+      return this.errorBoundary;
     }
-  } else {
-    console.error('❌ ErrorBoundary class not found - check script loading order');
-    return false;
+
+    // Try multiple strategies to get the error boundary
+    const strategies = [
+      () => this.waitForGlobalErrorBoundary(),
+      () => this.createFallbackErrorBoundary(),
+      () => this.createMinimalErrorBoundary()
+    ];
+
+    for (const strategy of strategies) {
+      try {
+        this.errorBoundary = await strategy();
+        if (this.errorBoundary) {
+          console.log('✅ Error boundary established via strategy');
+          return this.errorBoundary;
+        }
+      } catch (error) {
+        console.warn('Strategy failed, trying next...', error.message);
+      }
+    }
+
+    throw new Error('All error boundary strategies failed');
+  }
+
+  async waitForGlobalErrorBoundary() {
+    const startTime = performance.now();
+    
+    while (performance.now() - startTime < this.maxWaitTime) {
+      // Check for the global instance first
+      if (window.redditExpanderErrorBoundary && typeof window.redditExpanderErrorBoundary.wrap === 'function') {
+        console.log('✅ Found global error boundary instance');
+        return window.redditExpanderErrorBoundary;
+      }
+      
+      // Check for the class definition
+      if (window.ErrorBoundary && typeof window.ErrorBoundary === 'function') {
+        console.log('✅ Found ErrorBoundary class, creating instance');
+        const instance = new window.ErrorBoundary();
+        window.redditExpanderErrorBoundary = instance;
+        return instance;
+      }
+      
+      // Check for the class in the global scope
+      if (typeof ErrorBoundary !== 'undefined' && typeof ErrorBoundary === 'function') {
+        console.log('✅ Found ErrorBoundary in global scope, creating instance');
+        const instance = new ErrorBoundary();
+        window.redditExpanderErrorBoundary = instance;
+        return instance;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, this.checkInterval));
+    }
+    
+    throw new Error('Global error boundary not found within timeout');
+  }
+
+  createFallbackErrorBoundary() {
+    console.log('🔄 Creating fallback error boundary...');
+    
+    // Create a minimal but functional error boundary
+    const fallbackBoundary = {
+      wrap: (fn, context = 'unknown') => {
+        try {
+          return fn();
+        } catch (error) {
+          console.error(`[Fallback ErrorBoundary] Error in ${context}:`, error);
+          this.reportError(error, context);
+          throw error;
+        }
+      },
+      
+      reportError: (error, context) => {
+        console.error(`[Fallback ErrorBoundary] Error in ${context}:`, error);
+        // Send to background script if available
+        if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({
+            type: 'ERROR_BOUNDARY_REPORT',
+            error: {
+              message: error.message,
+              stack: error.stack,
+              context: context,
+              timestamp: Date.now()
+            }
+          }).catch(() => {
+            // Ignore messaging errors
+          });
+        }
+      },
+      
+      showUserFriendlyError: (error, context) => {
+        console.error(`[Fallback ErrorBoundary] User-friendly error for ${context}:`, error.message);
+        // Create a simple notification
+        this.showNotification(`Extension error: ${error.message}`, 'error');
+      },
+      
+      showNotification: (message, type = 'info') => {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 12px 16px;
+          border-radius: 8px;
+          color: white;
+          font-size: 14px;
+          z-index: 10001;
+          max-width: 300px;
+          background: ${type === 'error' ? '#f44336' : '#2196F3'};
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 5000);
+      }
+    };
+    
+    // Store globally for consistency
+    window.redditExpanderErrorBoundary = fallbackBoundary;
+    return fallbackBoundary;
+  }
+
+  createMinimalErrorBoundary() {
+    console.log('🔄 Creating minimal error boundary...');
+    
+    // Absolute minimal error boundary - just basic error catching
+    const minimalBoundary = {
+      wrap: (fn, context = 'unknown') => {
+        try {
+          return fn();
+        } catch (error) {
+          console.error(`[Minimal ErrorBoundary] Critical error in ${context}:`, error);
+          return null;
+        }
+      }
+    };
+    
+    window.redditExpanderErrorBoundary = minimalBoundary;
+    return minimalBoundary;
   }
 }
 
-// Initialize Reddit Comment Expander with comprehensive checks
-function initializeExpander() {
+// Global error boundary manager
+const errorBoundaryManager = new ErrorBoundaryManager();
+
+// Bulletproof initialization function
+async function bulletproofInitialization() {
   try {
-    console.log('🚀 Initializing Reddit Comment Expander');
+    console.log('🛡️ Starting bulletproof initialization...');
     
-    // Check if required classes are available with detailed logging
-    const requiredClasses = {
-      'ExpansionState': ExpansionState,
-      'RedditDetector': RedditDetector, 
-      'AccessibilityManager': AccessibilityManager,
-      'CommentExpander': CommentExpander,
-      'ExpansionErrorHandler': ExpansionErrorHandler
-    };
+    // Step 1: Ensure error boundary is available
+    const errorBoundary = await errorBoundaryManager.ensureErrorBoundary();
+    console.log('✅ Error boundary secured');
     
-    const missingClasses = [];
-    Object.entries(requiredClasses).forEach(([name, cls]) => {
-      if (typeof cls === 'undefined') {
-        missingClasses.push(name);
-        console.error(`❌ Missing required class: ${name}`);
-      } else {
-        console.log(`✅ Found required class: ${name}`);
+    // Step 2: Wait for all required classes with timeout
+    const requiredClasses = [
+      'ExpansionState',
+      'RedditDetector', 
+      'AccessibilityManager',
+      'CommentExpander',
+      'ExpansionErrorHandler',
+      'FeatureGates'
+    ];
+    
+    const classWaitStart = performance.now();
+    const classWaitTimeout = 5000; // 5 seconds
+    
+    while (performance.now() - classWaitStart < classWaitTimeout) {
+      const missingClasses = requiredClasses.filter(className => 
+        typeof window[className] === 'undefined'
+      );
+      
+      if (missingClasses.length === 0) {
+        console.log('✅ All required classes loaded');
+        break;
       }
-    });
-    
-    if (missingClasses.length > 0) {
-      throw new Error(`Missing required classes: ${missingClasses.join(', ')}`);
+      
+      console.log(`⏳ Waiting for classes: ${missingClasses.join(', ')}`);
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    // Create the main expander instance
-    console.log('📦 Creating RedditCommentExpander instance...');
-    const expander = new RedditCommentExpander();
-    
-    // Verify the expander was created properly
-    if (!expander) {
-      throw new Error('Failed to create RedditCommentExpander instance');
-    }
-    
-    // Verify critical components exist on the expander
-    const criticalComponents = {
-      'state': 'State manager',
-      'errorHandler': 'Error handler', 
-      'detector': 'Reddit detector',
-      'accessibility': 'Accessibility manager',
-      'expander': 'Comment expander'
-    };
-    
-    Object.entries(criticalComponents).forEach(([prop, description]) => {
-      if (expander[prop]) {
-        console.log(`✅ ${description} initialized`);
-      } else {
-        console.warn(`⚠️  ${description} missing from expander instance`);
-      }
-    });
-    
-    // Store references on window for testing and debugging
-    window.redditCommentExpander = expander;
-    
-    // Also ensure error boundary is accessible
-    if (globalErrorBoundary) {
-      window.redditExpanderErrorBoundary = globalErrorBoundary;
-      console.log('✅ Error boundary assigned to window');
-    }
-    
-    // Verify window assignments worked
-    if (window.redditCommentExpander === expander) {
-      console.log('✅ Main expander assigned to window.redditCommentExpander');
-    } else {
-      console.error('❌ Failed to assign expander to window');
-    }
-    
-    console.log('✅ Reddit Comment Expander initialized successfully');
-    
-    return expander;
+    // Step 3: Initialize with error boundary protection
+    return errorBoundary.wrap(() => {
+      console.log('🚀 Creating RedditCommentExpander with error boundary protection');
+      const expander = new RedditCommentExpander();
+      
+      // Verify critical components
+      const criticalChecks = [
+        { prop: 'state', name: 'State Manager' },
+        { prop: 'errorHandler', name: 'Error Handler' },
+        { prop: 'detector', name: 'Reddit Detector' },
+        { prop: 'accessibility', name: 'Accessibility Manager' },
+        { prop: 'expander', name: 'Comment Expander' }
+      ];
+      
+      criticalChecks.forEach(check => {
+        if (expander[check.prop]) {
+          console.log(`✅ ${check.name} initialized`);
+        } else {
+          console.warn(`⚠️ ${check.name} missing from expander`);
+        }
+      });
+      
+      // Store globally for testing
+      window.redditCommentExpander = expander;
+      console.log('✅ RedditCommentExpander created and stored globally');
+      
+      return expander;
+    }, 'main-initialization');
     
   } catch (error) {
-    console.error('❌ Failed to initialize Reddit Comment Expander:', error);
-    console.error('Error stack:', error.stack);
+    console.error('💥 Bulletproof initialization failed:', error);
     
-    // Try to show user-friendly error
-    if (globalErrorBoundary) {
-      globalErrorBoundary.showUserFriendlyError(error, 'extension initialization');
-    } else {
-      // Fallback notification without error boundary
-      console.error('💥 Critical initialization failure - no error boundary available');
-    }
-    
-    throw error;
-  }
-}
-
-// Wait for all required classes to be loaded
-async function waitForClasses(maxWaitMs = 5000, checkIntervalMs = 100) {
-  const requiredClasses = [
-    'ErrorBoundary',
-    'ExpansionState',
-    'ExpansionStatus',
-    'StateEventTypes', 
-    'FeatureGates',
-    'RedditDetector',
-    'AccessibilityManager',
-    'CommentExpander',
-    'ExpansionErrorHandler',
-    'PriorityQueue',
-    'AdaptiveRateLimiter'
-  ];
-  
-  const startTime = performance.now();
-  
-  while (performance.now() - startTime < maxWaitMs) {
-    const missingClasses = requiredClasses.filter(className => 
-      typeof window[className] === 'undefined'
-    );
-    
-    if (missingClasses.length === 0) {
-      console.log(`✅ All ${requiredClasses.length} classes loaded in ${Math.round(performance.now() - startTime)}ms`);
-      return true;
-    }
-    
-    console.log(`⏳ Waiting for classes: ${missingClasses.join(', ')}`);
-    await new Promise(resolve => setTimeout(resolve, checkIntervalMs));
-  }
-  
-  const stillMissing = requiredClasses.filter(className => 
-    typeof window[className] === 'undefined'
-  );
-  
-  console.error(`❌ Timeout waiting for classes. Still missing: ${stillMissing.join(', ')}`);
-  return false;
-}
-
-// Retry mechanism for initialization with class loading wait
-async function initializeWithRetry(maxAttempts = 3, delayMs = 1000) {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Last resort: try to create expander without error boundary
     try {
-      console.log(`🔄 Initialization attempt ${attempt}/${maxAttempts}`);
-      
-      // Wait for all classes to be loaded
-      const classesLoaded = await waitForClasses(attempt === 1 ? 2000 : 5000);
-      if (!classesLoaded) {
-        throw new Error('Required classes not loaded within timeout');
-      }
-      
-      // Initialize error boundary after classes are loaded
-      const errorBoundaryInitialized = initializeErrorBoundary();
-      if (!errorBoundaryInitialized) {
-        console.warn('⚠️ Error boundary initialization failed, continuing without it');
-      }
-      
-      const expander = initializeExpander();
-      console.log(`✅ Initialization succeeded on attempt ${attempt}`);
+      console.log('🔄 Attempting fallback initialization without error boundary...');
+      const expander = new RedditCommentExpander();
+      window.redditCommentExpander = expander;
+      console.log('✅ Fallback initialization succeeded');
       return expander;
-      
-    } catch (error) {
-      console.error(`❌ Initialization attempt ${attempt} failed:`, error.message);
-      
-      if (attempt === maxAttempts) {
-        console.error('💥 All initialization attempts failed');
-        throw error;
-      } else {
-        console.log(`🔄 Will retry in ${delayMs}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
+    } catch (fallbackError) {
+      console.error('💥 Even fallback initialization failed:', fallbackError);
+      throw fallbackError;
     }
   }
 }
 
-// Main initialization orchestrator
-function startInitialization() {
-  console.log(`📄 Document ready state: ${document.readyState}`);
-  console.log(`⏰ Initializing at: ${performance.now()}ms`);
+// Main initialization entry point
+function startBulletproofInitialization() {
+  console.log('🛡️ Starting bulletproof initialization system...');
   
-  // Start initialization without error boundary first
-  // Error boundary will be initialized during the process
-  initializeWithRetry(3, 500).catch(error => {
-    console.error('💥 Direct initialization failed after retries:', error);
-  });
+  // Start the bulletproof initialization
+  bulletproofInitialization()
+    .then(expander => {
+      console.log('🎉 Bulletproof initialization completed successfully');
+    })
+    .catch(error => {
+      console.error('💥 Bulletproof initialization completely failed:', error);
+      
+      // Show user-friendly error message
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #f44336;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        max-width: 400px;
+        text-align: center;
+      `;
+      errorDiv.innerHTML = `
+        <h3>Extension Initialization Failed</h3>
+        <p>The Reddit Comment Expander failed to initialize properly.</p>
+        <p>Please refresh the page and try again.</p>
+        <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: white; color: #f44336; border: none; border-radius: 4px; cursor: pointer;">
+          Refresh Page
+        </button>
+      `;
+      document.body.appendChild(errorDiv);
+    });
 }
 
-// Wait for DOM to be ready if needed
+// Wait for DOM to be ready
 if (document.readyState === 'loading') {
-  console.log('📄 DOM still loading, waiting for DOMContentLoaded...');
-  document.addEventListener('DOMContentLoaded', startInitialization);
+  console.log('📄 DOM loading, waiting for DOMContentLoaded...');
+  document.addEventListener('DOMContentLoaded', startBulletproofInitialization);
 } else {
-  console.log('📄 DOM already ready, starting initialization immediately');
-  startInitialization();
+  console.log('📄 DOM ready, starting bulletproof initialization immediately');
+  startBulletproofInitialization();
 }
-
-// Export error boundary for use by other parts of the extension
-window.redditExpanderErrorBoundary = globalErrorBoundary;

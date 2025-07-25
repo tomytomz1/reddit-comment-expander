@@ -13,6 +13,7 @@ window.REDDIT_EXPANDER_ERROR_BOUNDARY_LOADED = true;
 
 class ErrorBoundary {
   constructor(options = {}) {
+    console.log('🏗️ [ErrorBoundary] Class constructor called');
     this.options = {
       enableUserNotifications: options.enableUserNotifications !== false,
       enableRuntimeReporting: options.enableRuntimeReporting !== false,
@@ -576,9 +577,16 @@ class ErrorBoundary {
   }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = ErrorBoundary;
-} else {
-  window.ErrorBoundary = ErrorBoundary;
+// Force global exposure for testing
+console.log('🔧 [ErrorBoundary] Attempting to expose globally...');
+try {
+  if (typeof window !== 'undefined') {
+    window.ErrorBoundary = ErrorBoundary;
+    console.log('✅ [ErrorBoundary] Successfully exposed to window.ErrorBoundary');
+    console.log('🔍 [ErrorBoundary] Available methods:', Object.getOwnPropertyNames(ErrorBoundary));
+  } else {
+    console.error('❌ [ErrorBoundary] Window object not available');
+  }
+} catch (error) {
+  console.error('❌ [ErrorBoundary] Failed to expose globally:', error);
 }

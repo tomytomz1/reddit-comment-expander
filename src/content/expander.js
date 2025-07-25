@@ -102,6 +102,222 @@ class AdaptiveRateLimiter {
   }
 }
 
+// Adaptive Batch Manager for Dynamic Batch Sizing
+class AdaptiveBatchManager {
+  constructor() {
+    // Batch size configuration
+    this.minBatchSize = 1;
+    this.maxBatchSize = 15;
+    this.currentBatchSize = 3; // Start with conservative batch size
+    this.targetBatchSize = 5; // Target for optimization
+    
+    // Performance tracking
+    this.batchHistory = [];
+    this.maxHistorySize = 20;
+    this.processingTimes = [];
+    this.maxProcessingHistory = 10;
+    
+    // Speed targets
+    this.targetElementsPerSecond = 2.5; // Target 2-3 elements/second
+    this.minElementsPerSecond = 1.0;
+    this.maxElementsPerSecond = 4.0;
+    
+    // Memory monitoring
+    this.memoryThreshold = 0.8; // 80% memory usage threshold
+    this.lastMemoryCheck = 0;
+    this.memoryCheckInterval = 5000; // Check memory every 5 seconds
+    
+    // Optimization intervals
+    this.optimizationInterval = 10; // Optimize every 10 batches
+    this.batchCount = 0;
+    
+    // Error tracking
+    this.errorRate = 0;
+    this.maxErrorRate = 0.3; // 30% error rate threshold
+    
+    console.log('🚀 [AdaptiveBatchManager] Initialized with target:', this.targetElementsPerSecond, 'elements/second');
+  }
+
+  // Get the current optimal batch size
+  getBatchSize() {
+    return Math.round(this.currentBatchSize);
+  }
+
+  // Record batch processing performance
+  recordBatchPerformance(batchSize, processingTime, successCount, totalCount) {
+    console.log('[BatchManager] recordBatchPerformance called:', { batchSize, processingTime, successCount, totalCount });
+    const now = performance.now();
+    
+    // Calculate performance metrics
+    const elementsPerSecond = totalCount / (processingTime / 1000);
+    const successRate = totalCount > 0 ? successCount / totalCount : 1;
+    
+    // Record batch performance
+    this.batchHistory.push({
+      timestamp: now,
+      batchSize,
+      processingTime,
+      elementsPerSecond,
+      successRate,
+      successCount,
+      totalCount
+    });
+    
+    // Keep history size manageable
+    if (this.batchHistory.length > this.maxHistorySize) {
+      this.batchHistory.shift();
+    }
+    
+    // Record processing time for trend analysis
+    this.processingTimes.push(processingTime);
+    if (this.processingTimes.length > this.maxProcessingHistory) {
+      this.processingTimes.shift();
+    }
+    
+    // Update error rate
+    this.errorRate = 1 - successRate;
+    
+    this.batchCount++;
+    
+    // Log performance metrics
+    console.log(`📊 [BatchManager] Batch ${this.batchCount}: ${batchSize} elements, ${processingTime.toFixed(0)}ms, ${elementsPerSecond.toFixed(2)}/s, ${(successRate * 100).toFixed(1)}% success`);
+    
+    // Optimize batch size periodically
+    if (this.batchCount % this.optimizationInterval === 0) {
+      this.optimizeBatchSize();
+    }
+  }
+
+  // Optimize batch size based on performance metrics
+  optimizeBatchSize() {
+    if (this.batchHistory.length < 3) {
+      return; // Need more data
+    }
+    
+    // Calculate recent performance averages
+    const recentBatches = this.batchHistory.slice(-5);
+    const avgElementsPerSecond = recentBatches.reduce((sum, batch) => sum + batch.elementsPerSecond, 0) / recentBatches.length;
+    const avgSuccessRate = recentBatches.reduce((sum, batch) => sum + batch.successRate, 0) / recentBatches.length;
+    const avgProcessingTime = recentBatches.reduce((sum, batch) => sum + batch.processingTime, 0) / recentBatches.length;
+    
+    // Check memory usage
+    const memoryUsage = this.getMemoryUsage();
+    const isMemoryConstrained = memoryUsage > this.memoryThreshold;
+    
+    console.log(`🔍 [BatchManager] Optimization check: ${avgElementsPerSecond.toFixed(2)}/s, ${(avgSuccessRate * 100).toFixed(1)}% success, ${avgProcessingTime.toFixed(0)}ms avg, ${(memoryUsage * 100).toFixed(1)}% memory`);
+    
+    // Determine optimal batch size adjustment
+    let adjustment = 0;
+    
+    // Performance-based adjustments
+    if (avgElementsPerSecond < this.minElementsPerSecond) {
+      // Too slow - increase batch size
+      adjustment = 1;
+      console.log('📈 [BatchManager] Performance too slow, increasing batch size');
+    } else if (avgElementsPerSecond > this.maxElementsPerSecond) {
+      // Too fast - decrease batch size for better control
+      adjustment = -0.5;
+      console.log('📉 [BatchManager] Performance too fast, decreasing batch size');
+    } else if (avgElementsPerSecond < this.targetElementsPerSecond) {
+      // Below target - small increase
+      adjustment = 0.5;
+      console.log('📈 [BatchManager] Below target speed, small increase');
+    } else if (avgElementsPerSecond > this.targetElementsPerSecond * 1.2) {
+      // Well above target - small decrease
+      adjustment = -0.25;
+      console.log('📉 [BatchManager] Well above target, small decrease');
+    }
+    
+    // Error rate adjustments
+    if (this.errorRate > this.maxErrorRate) {
+      // High error rate - decrease batch size
+      adjustment = Math.min(adjustment, -1);
+      console.log('⚠️ [BatchManager] High error rate, decreasing batch size');
+    } else if (this.errorRate < 0.1 && avgSuccessRate > 0.95) {
+      // Very low error rate - can increase batch size
+      adjustment = Math.max(adjustment, 0.5);
+      console.log('✅ [BatchManager] Low error rate, can increase batch size');
+    }
+    
+    // Memory-based adjustments
+    if (isMemoryConstrained) {
+      // Memory pressure - decrease batch size
+      adjustment = Math.min(adjustment, -1);
+      console.log('💾 [BatchManager] Memory pressure, decreasing batch size');
+    }
+    
+    // Apply adjustment with bounds
+    const newBatchSize = Math.max(
+      this.minBatchSize,
+      Math.min(this.maxBatchSize, this.currentBatchSize + adjustment)
+    );
+    
+    if (newBatchSize !== this.currentBatchSize) {
+      console.log(`🔄 [BatchManager] Adjusting batch size: ${this.currentBatchSize.toFixed(1)} → ${newBatchSize.toFixed(1)}`);
+      this.currentBatchSize = newBatchSize;
+    }
+  }
+
+  // Get current memory usage (if available)
+  getMemoryUsage() {
+    const now = performance.now();
+    
+    // Only check memory periodically to avoid performance impact
+    if (now - this.lastMemoryCheck < this.memoryCheckInterval) {
+      return 0.5; // Return conservative estimate if not checking
+    }
+    
+    this.lastMemoryCheck = now;
+    
+    try {
+      if (performance.memory) {
+        const used = performance.memory.usedJSHeapSize;
+        const total = performance.memory.totalJSHeapSize;
+        return used / total;
+      }
+    } catch (error) {
+      // Memory API not available
+    }
+    
+    return 0.5; // Conservative estimate
+  }
+
+  // Get performance statistics
+  getPerformanceStats() {
+    if (this.batchHistory.length === 0) {
+      return {
+        avgElementsPerSecond: 0,
+        avgSuccessRate: 1,
+        avgProcessingTime: 0,
+        currentBatchSize: this.currentBatchSize,
+        errorRate: this.errorRate,
+        memoryUsage: this.getMemoryUsage()
+      };
+    }
+    
+    const recentBatches = this.batchHistory.slice(-5);
+    return {
+      avgElementsPerSecond: recentBatches.reduce((sum, batch) => sum + batch.elementsPerSecond, 0) / recentBatches.length,
+      avgSuccessRate: recentBatches.reduce((sum, batch) => sum + batch.successRate, 0) / recentBatches.length,
+      avgProcessingTime: recentBatches.reduce((sum, batch) => sum + batch.processingTime, 0) / recentBatches.length,
+      currentBatchSize: this.currentBatchSize,
+      errorRate: this.errorRate,
+      memoryUsage: this.getMemoryUsage(),
+      totalBatches: this.batchCount
+    };
+  }
+
+  // Reset for new expansion session
+  reset() {
+    this.batchHistory = [];
+    this.processingTimes = [];
+    this.batchCount = 0;
+    this.errorRate = 0;
+    this.currentBatchSize = 3; // Reset to conservative size
+    console.log('🔄 [AdaptiveBatchManager] Reset for new expansion session');
+  }
+}
+
 // Targeted AbortError Handler - only active during expansion operations
 class ExpansionErrorHandler {
   constructor() {
@@ -189,6 +405,7 @@ class CommentExpander {
     
     this.queue = new PriorityQueue();
     this.rateLimiter = new AdaptiveRateLimiter();
+    this.batchManager = new AdaptiveBatchManager(); // NEW: Adaptive batch sizing
     this.processed = new WeakSet();
     this.statusOverlay = null;
     this.errorHandler = new ExpansionErrorHandler(); // Targeted error handling
@@ -257,13 +474,25 @@ class CommentExpander {
 
   get stats() {
     const stateData = this.state.getState();
+    const batchStats = this.batchManager.getPerformanceStats();
+    
     return {
       startTime: stateData.progress.startTime,
       endTime: stateData.progress.endTime,
       expanded: stateData.progress.successful,
       failed: stateData.progress.failed,
       retries: stateData.errors.length,
-      categories: stateData.categories
+      categories: stateData.categories,
+      // NEW: Batch optimization statistics
+      batchOptimization: {
+        currentBatchSize: batchStats.currentBatchSize,
+        avgElementsPerSecond: batchStats.avgElementsPerSecond,
+        avgSuccessRate: batchStats.avgSuccessRate,
+        avgProcessingTime: batchStats.avgProcessingTime,
+        errorRate: batchStats.errorRate,
+        memoryUsage: batchStats.memoryUsage,
+        totalBatches: batchStats.totalBatches
+      }
     };
   }
 
@@ -412,7 +641,27 @@ class CommentExpander {
    * Get expansion statistics
    */
   getStats() {
-    return this.stats; // Uses the getter which pulls from state
+    const stateData = this.state.getState();
+    const batchStats = this.batchManager.getPerformanceStats();
+    
+    return {
+      startTime: stateData.progress.startTime,
+      endTime: stateData.progress.endTime,
+      expanded: stateData.progress.successful,
+      failed: stateData.progress.failed,
+      retries: stateData.errors.length,
+      categories: stateData.categories,
+      // NEW: Batch optimization statistics
+      batchOptimization: {
+        currentBatchSize: batchStats.currentBatchSize,
+        avgElementsPerSecond: batchStats.avgElementsPerSecond,
+        avgSuccessRate: batchStats.avgSuccessRate,
+        avgProcessingTime: batchStats.avgProcessingTime,
+        errorRate: batchStats.errorRate,
+        memoryUsage: batchStats.memoryUsage,
+        totalBatches: batchStats.totalBatches
+      }
+    };
   }
 
   /**
@@ -504,6 +753,9 @@ class CommentExpander {
     this.processed = new WeakSet();
     this.queue.clear();
     
+    // Reset adaptive batch manager for new expansion session
+    this.batchManager.reset();
+    
     // NEW: Reset auto-scroll stats for new expansion session
     this.autoScrollStats = {
       isActive: false,
@@ -557,8 +809,20 @@ class CommentExpander {
           // Exit if cancelled during pause
           if (this.shouldCancel) break;
           
-          const batch = this.queue.dequeueBatch(3); // Further reduced batch size for very conservative expansion
-          await this.processBatch(batch, options);
+          // Get adaptive batch size from batch manager
+          const batchSize = this.batchManager.getBatchSize();
+          const batch = this.queue.dequeueBatch(batchSize);
+          
+          if (batch.length === 0) break;
+          
+          // Process batch with performance tracking
+          const batchStartTime = performance.now();
+          const results = await this.processBatch(batch, options);
+          const batchProcessingTime = performance.now() - batchStartTime;
+          
+          // Record performance metrics for adaptive optimization
+          const successCount = results.filter(r => r.success).length;
+          this.batchManager.recordBatchPerformance(batch.length, batchProcessingTime, successCount, batch.length);
           
           processedCount += batch.length;
           this.autoExpansionStats.totalProcessed += batch.length;
@@ -612,10 +876,18 @@ class CommentExpander {
       if (this.queue.size() > 0) {
         console.log(`Final scan found ${this.queue.size()} additional elements, processing...`);
         while (this.queue.size() > 0 && performance.now() - this.stats.startTime < maxTime) {
-          const batch = this.getNextBatch();
+          const batchSize = this.batchManager.getBatchSize();
+          const batch = this.queue.dequeueBatch(batchSize);
           if (batch.length === 0) break;
           
-          await this.processBatch(batch);
+          const batchStartTime = performance.now();
+          const results = await this.processBatch(batch);
+          const batchProcessingTime = performance.now() - batchStartTime;
+          
+          // Record performance for final batches
+          const successCount = results.filter(r => r.success).length;
+          this.batchManager.recordBatchPerformance(batch.length, batchProcessingTime, successCount, batch.length);
+          
           this.autoExpansionStats.totalProcessed += batch.length;
           this.autoExpansionStats.lastActivityTime = performance.now();
           this.updatePersistentProgress();
@@ -1460,6 +1732,12 @@ class CommentExpander {
   createPersistentProgressOverlay() {
     console.log('[Progress] Creating persistent progress overlay...');
     
+    // Reset state to IDLE when creating a new overlay (new session)
+    if (this.state.getStatus() === ExpansionStatus.PAUSED) {
+      console.log('[Progress] Resetting paused state from previous session');
+      this.state.setStatus(ExpansionStatus.IDLE);
+    }
+    
     // Remove any existing progress overlays to prevent duplicates
     const existingOverlays = document.querySelectorAll('[data-reddit-expander-progress]');
     existingOverlays.forEach(existing => {
@@ -1596,6 +1874,10 @@ class CommentExpander {
     
     if (pauseBtn) {
       pauseBtn.addEventListener('click', () => {
+        // Visual debug indicator
+        pauseBtn.style.border = '3px solid red';
+        setTimeout(() => pauseBtn.style.border = '', 1000);
+        
         if (this.isPaused) {
           this.resume();
         } else {
@@ -1665,11 +1947,13 @@ class CommentExpander {
       progressText.textContent = `${this.autoExpansionStats.totalProcessed} expanded`;
     }
     
-    // Update time
+    // Update time with batch optimization info
     const progressTime = overlay.querySelector('.persistent-progress-time');
     if (progressTime) {
       const rate = this.autoExpansionStats.totalProcessed / totalTime;
-      progressTime.textContent = `${totalTime.toFixed(1)}s elapsed • ${rate.toFixed(1)}/s`;
+      const batchStats = this.batchManager.getPerformanceStats();
+      const batchInfo = batchStats.totalBatches > 0 ? ` • Batch: ${batchStats.currentBatchSize} • ${batchStats.avgElementsPerSecond.toFixed(1)}/s` : '';
+      progressTime.textContent = `${totalTime.toFixed(1)}s elapsed • ${rate.toFixed(1)}/s${batchInfo}`;
     }
     
     // Update progress bar (simple linear progress based on time)
@@ -1684,8 +1968,12 @@ class CommentExpander {
     // Update pause button text
     const pauseBtn = overlay.querySelector('.persistent-pause-btn');
     if (pauseBtn) {
-      pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
-      pauseBtn.style.background = this.isPaused ? '#28a745' : '#ffa500';
+      const currentStatus = this.state.getStatus();
+      const isPaused = this.isPaused;
+      
+      
+      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+      pauseBtn.style.background = isPaused ? '#28a745' : '#ffa500';
     }
   }
 
@@ -1826,15 +2114,7 @@ class CommentExpander {
     }
   }
 
-  // Get expansion statistics
-  getStats() {
-    return {
-      ...this.stats,
-      isExpanding: this.isExpanding,
-      queueSize: this.queue.size(),
-      observersActive: Array.from(this.observers.keys())
-    };
-  }
+
 
   async yieldToBrowser() {
     // Use requestIdleCallback if available, otherwise setTimeout
@@ -1849,13 +2129,32 @@ class CommentExpander {
 
   // New: Pause expansion
   pause() {
-    if (!this.isExpanding || this.isPaused) {
-      console.log('Cannot pause: not expanding or already paused');
+    // Check what expansion processes are currently active
+    const hasAutoExpansion = this.autoExpansionStats && this.autoExpansionStats.isActive;
+    const hasAutoScroll = this.autoScrollStats && this.autoScrollStats.isActive;
+    const hasMainExpansion = this.isExpanding;
+    const hasQueue = this.queue && this.queue.size() > 0;
+    
+    // Allow pausing if ANY expansion process is active
+    const canPause = hasMainExpansion || hasAutoExpansion || hasAutoScroll || hasQueue;
+    
+    if (!canPause || this.isPaused) {
       return false;
     }
     
-    this.isPaused = true;
-    console.log('Expansion paused by user');
+    // Set the global pause state
+    this.state.setStatus(ExpansionStatus.PAUSED, 'User requested pause');
+    
+    // Pause auto-expansion if active
+    if (hasAutoExpansion) {
+      this.autoExpansionStats.isPaused = true;
+    }
+    
+    // Pause auto-scroll if active  
+    if (hasAutoScroll) {
+      this.autoScrollStats.isPaused = true;
+    }
+    
     this.accessibility.announceToScreenReader('Expansion paused');
     
     // Update status overlay to show paused state
@@ -1868,34 +2167,43 @@ class CommentExpander {
   
   // New: Resume expansion
   resume() {
-    if (!this.isExpanding || !this.isPaused) {
-      console.log('Cannot resume: not expanding or not paused');
+    if (!this.isPaused) {
       return false;
     }
     
-    this.isPaused = false;
-    this.isResuming = true;
-    console.log('Expansion resumed by user');
+    // Resume the appropriate expansion process
+    const wasAutoExpansion = this.autoExpansionStats && this.autoExpansionStats.isPaused;
+    const wasAutoScroll = this.autoScrollStats && this.autoScrollStats.isPaused;
+    
+    // Set the global state back to expanding
+    this.state.setStatus(ExpansionStatus.EXPANDING);
+    
+    // Resume auto-expansion if it was paused
+    if (wasAutoExpansion) {
+      this.autoExpansionStats.isPaused = false;
+    }
+    
+    // Resume auto-scroll if it was paused
+    if (wasAutoScroll) {
+      this.autoScrollStats.isPaused = false;
+    }
+    
     this.accessibility.announceToScreenReader('Expansion resumed');
     
-    // Resolve the pause promise to continue execution
-    if (this.pauseResolver) {
-      this.pauseResolver();
-      this.pauseResolver = null;
-    }
+    // Update the persistent progress overlay to refresh button state
+    this.updatePersistentProgress();
     
     return true;
   }
   
   // New: Stop expansion completely
   stop() {
-    if (!this.isExpanding) {
-      console.log('Cannot stop: not expanding');
+    if (!this.isExpanding && !this.isPaused) {
+      console.log('Cannot stop: not expanding or paused');
       return false;
     }
     
-    this.shouldCancel = true;
-    this.isPaused = false;
+    this.state.setStatus(ExpansionStatus.CANCELLED);
     console.log('Expansion stopped by user');
     this.accessibility.announceToScreenReader('Expansion stopped');
     
@@ -1913,15 +2221,18 @@ class CommentExpander {
   
   // New: Check if we should pause and wait
   async checkPauseState() {
-    if (this.isPaused && !this.shouldCancel) {
-      console.log('Expansion paused, waiting for resume...');
+    let pauseLogged = false;
+    while (this.isPaused && !this.shouldCancel) {
+      if (!pauseLogged) {
+        console.log('Expansion paused, waiting for resume...');
+        pauseLogged = true;
+      }
       
-      // Create a promise that resolves when resumed
-      await new Promise(resolve => {
-        this.pauseResolver = resolve;
-      });
-      
-      this.isResuming = false;
+      // Wait in a loop until no longer paused
+      await new Promise(resolve => setTimeout(resolve, 500)); // Check every 500ms
+    }
+    
+    if (!this.shouldCancel && this.state.getStatus() === ExpansionStatus.EXPANDING) {
       console.log('Expansion resumed, continuing...');
     }
   }
@@ -1941,11 +2252,13 @@ class CommentExpander {
     };
     
     this.accessibility.updateStatusOverlay(this.statusOverlay, status);
+    
+    // Update the persistent progress overlay to refresh button state
+    this.updatePersistentProgress();
   }
 
   cancel() {
-    this.shouldCancel = true;
-    this.isPaused = false; // Clear pause state when cancelling
+    this.state.setStatus(ExpansionStatus.CANCELLED);
     
     // Resolve pause promise if paused
     if (this.pauseResolver) {
@@ -2061,6 +2374,10 @@ class CommentExpander {
       return;
     }
 
+    // Check if we should pause
+    await this.checkPauseState();
+    if (this.shouldCancel) return;
+
     // Check if we've reached the maximum attempts
     if (this.autoScrollStats.scrollAttempts >= this.autoScrollStats.maxScrollAttempts) {
       console.log('[Auto-Scroll] Reached maximum scroll attempts, completing...');
@@ -2084,6 +2401,10 @@ class CommentExpander {
 
     // Wait for content to load
     await new Promise(resolve => setTimeout(resolve, this.autoScrollStats.scrollDelay));
+
+    // Check if we should pause after waiting
+    await this.checkPauseState();
+    if (this.shouldCancel) return;
 
     // Check if new content was loaded
     const newScrollHeight = document.documentElement.scrollHeight;
