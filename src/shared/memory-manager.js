@@ -15,11 +15,11 @@ console.log('🧠 [MEMORY-MANAGER] Loading MemoryManager...');
 class MemoryManager {
   constructor(options = {}) {
     this.options = {
-      cleanupInterval: options.cleanupInterval || 120000, // 2 minutes
-      maxMemoryUsage: options.maxMemoryUsage || 50 * 1024 * 1024, // 50MB
+      cleanupInterval: options.cleanupInterval || 300000, // 5 minutes (less frequent)
+      maxMemoryUsage: options.maxMemoryUsage || 200 * 1024 * 1024, // 200MB (more reasonable)
       enableMonitoring: options.enableMonitoring !== false,
       enableAutoCleanup: options.enableAutoCleanup !== false,
-      logLevel: options.logLevel || 'info', // 'debug', 'info', 'warn', 'error'
+      logLevel: options.logLevel || 'warn', // Only show warnings and errors by default
       ...options
     };
 
@@ -68,7 +68,7 @@ class MemoryManager {
     }
     
     this._setupPageUnloadCleanup();
-    this._log('MemoryManager initialized', 'info', this.options);
+    this._log('MemoryManager initialized', 'debug', this.options);
   }
 
   /**
@@ -129,9 +129,9 @@ class MemoryManager {
       this.stats.peakMemoryUsage = usage;
     }
     
-    // Take snapshot every 5 minutes
+    // Take snapshot every 10 minutes (less frequent)
     if (this.memorySnapshots.length === 0 || 
-        Date.now() - this.memorySnapshots[this.memorySnapshots.length - 1].timestamp > 300000) {
+        Date.now() - this.memorySnapshots[this.memorySnapshots.length - 1].timestamp > 600000) {
       this.memorySnapshots.push({
         timestamp: Date.now(),
         usage: usage,
@@ -140,20 +140,22 @@ class MemoryManager {
         activeOverlays: this.progressOverlays.size
       });
       
-      // Keep only last 24 snapshots (2 hours)
-      if (this.memorySnapshots.length > 24) {
+      // Keep only last 12 snapshots (2 hours)
+      if (this.memorySnapshots.length > 12) {
         this.memorySnapshots.shift();
       }
     }
     
-    // Check for memory pressure
-    if (usage > this.options.maxMemoryUsage * 0.8) {
-      this._log(`Memory usage high: ${this._formatBytes(usage)}`, 'warn');
+    // Check for memory pressure (only if really high)
+    if (usage > this.options.maxMemoryUsage * 0.9) {
+      this._log(`Memory usage very high: ${this._formatBytes(usage)}`, 'warn');
       this.performCleanup();
+    } else if (usage > this.options.maxMemoryUsage * 0.7) {
+      this._log(`Memory usage elevated: ${this._formatBytes(usage)}`, 'debug');
     }
     
-    // Schedule next monitoring
-    setTimeout(() => this._monitorMemoryUsage(), 30000); // Every 30 seconds
+    // Schedule next monitoring (much less frequent)
+    setTimeout(() => this._monitorMemoryUsage(), 120000); // Every 2 minutes
   }
 
   /**
