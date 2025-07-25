@@ -1781,6 +1781,7 @@ class CommentExpander {
       // Update counter for elements found during auto-scroll
       if (this.autoScrollStats.isActive) {
         this.autoExpansionStats.elementsFoundDuringScroll += unprocessedElements.length;
+        console.log(`[Progress] Found ${unprocessedElements.length} new elements during auto-scroll (total: ${this.autoExpansionStats.elementsFoundDuringScroll})`);
       }
       
       // Initialize or update cumulative progress tracking
@@ -2049,13 +2050,16 @@ class CommentExpander {
     
     if (pauseBtn) {
       pauseBtn.addEventListener('click', () => {
+        console.log('[Progress] Pause button clicked');
         // Visual debug indicator
         pauseBtn.style.border = '3px solid red';
         setTimeout(() => pauseBtn.style.border = '', 1000);
         
         if (this.isPaused) {
+          console.log('[Progress] Resuming expansion...');
           this.resume();
         } else {
+          console.log('[Progress] Pausing expansion...');
           this.pause();
         }
       });
@@ -2063,6 +2067,7 @@ class CommentExpander {
     
     if (stopBtn) {
       stopBtn.addEventListener('click', () => {
+        console.log('[Progress] Stop button clicked');
         this.stop();
       });
     }
@@ -2563,6 +2568,15 @@ class CommentExpander {
 
     // Start the auto-scroll process
     this.performAutoScroll();
+    
+    // Set up regular progress updates during auto-scroll
+    this.autoScrollStats.progressUpdateTimer = setInterval(() => {
+      if (this.autoScrollStats.isActive) {
+        this.updatePersistentProgress();
+      } else {
+        clearInterval(this.autoScrollStats.progressUpdateTimer);
+      }
+    }, 1000); // Update every second
   }
 
   async performAutoScroll() {
@@ -2597,6 +2611,9 @@ class CommentExpander {
 
     // Wait for content to load
     await new Promise(resolve => setTimeout(resolve, this.autoScrollStats.scrollDelay));
+
+    // Update progress overlay during auto-scroll
+    this.updatePersistentProgress();
 
     // Check if we should pause after waiting
     await this.checkPauseState();
@@ -2675,6 +2692,11 @@ class CommentExpander {
     if (this.autoScrollStats.scrollInterval) {
       clearInterval(this.autoScrollStats.scrollInterval);
       this.autoScrollStats.scrollInterval = null;
+    }
+    
+    if (this.autoScrollStats.progressUpdateTimer) {
+      clearInterval(this.autoScrollStats.progressUpdateTimer);
+      this.autoScrollStats.progressUpdateTimer = null;
     }
     
     // Update persistent progress overlay
