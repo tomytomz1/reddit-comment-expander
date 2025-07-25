@@ -1216,8 +1216,9 @@ class CommentExpander {
 
   async expandElement(element, category) {
     // Debug: log at the start of expandElement
-    console.log('[Expander] expandElement called:', category, element.outerHTML);
+    console.log('[Expander] Processing missed button:', category);
     if (!element || this.processed.has(element)) {
+      console.log('[Expander] Skipping - already processed or invalid element');
       return false;
     }
 
@@ -1303,8 +1304,8 @@ class CommentExpander {
     const hasExpandableIcon = hasJoinOutline || hasPlus || hasPlusOutline || hasExpand || hasExpandOutline;
     
     if (!hasExpandableIcon) {
-      console.log('[Expander] Skipping button (no expandable icon):', expandButton.outerHTML);
-      return false;
+      console.log('[Expander] Skipping button (no expandable icon) - attempting anyway');
+      // Don't return false - try to expand anyway
     }
     // Log before clicking
     console.log('[Expander] Attempting to click expand button:', expandButton.outerHTML);
@@ -1844,10 +1845,11 @@ class CommentExpander {
             item.element.dataset.redditExpanderProcessed = 'true';
             
             const success = await this.expandElement(item.element, item.category);
+            // Count all attempts, not just successful ones
+            batchProcessed++;
+            this.autoExpansionStats.totalProcessed++;
+            
             if (success) {
-              batchProcessed++;
-              this.autoExpansionStats.totalProcessed++;
-              
               // Add gentle highlight to newly expanded content
               this.highlightNewlyExpanded(item.element);
             }
@@ -2843,21 +2845,22 @@ class CommentExpander {
           processedInThisCheck.add(item.element);
           
           const success = await this.expandElement(item.element, item.category);
+          // Count all attempts, not just successful ones
+          qualityCheckProcessed++;
+          this.autoExpansionStats.totalProcessed++;
+          
           if (success) {
-            qualityCheckProcessed++;
-            this.autoExpansionStats.totalProcessed++;
-            
             // Add highlight to newly expanded content
             this.highlightNewlyExpanded(item.element);
-            
-            // Update persistent progress with quality check details
-            this.updatePersistentProgress();
-            this.updatePersistentPhase(
-              `Quality Check (${this.qualityCheckAttempts}/3)`,
-              `Processed ${qualityCheckProcessed}/${missedElements.length} missed elements...`,
-              'info'
-            );
           }
+          
+          // Update persistent progress with quality check details
+          this.updatePersistentProgress();
+          this.updatePersistentPhase(
+            `Quality Check (${this.qualityCheckAttempts}/3)`,
+            `Processed ${qualityCheckProcessed}/${missedElements.length} missed elements...`,
+            'info'
+          );
           
           // Small delay between elements
           await new Promise(resolve => setTimeout(resolve, 200));
