@@ -512,11 +512,13 @@ class SelectorFactory {
 
     const selectors = this.getSelectors(category, version);
     if (!selectors || selectors.length === 0) {
+      console.warn(`[SelectorFactory] No selectors available for category: ${category}`);
       return [];
     }
 
     let elements = [];
     let usedSelector = null;
+    let selectorErrors = [];
 
     // Try each selector until we find elements
     for (const selector of selectors) {
@@ -532,7 +534,7 @@ class SelectorFactory {
           break;
         }
       } catch (error) {
-        console.warn(`[SelectorFactory] Error with selector "${selector}":`, error);
+        selectorErrors.push({ selector, error: error.message });
         continue;
       }
     }
@@ -540,30 +542,80 @@ class SelectorFactory {
     // Log which selector was used
     if (usedSelector) {
       console.log(`[SelectorFactory] Found ${elements.length} elements for "${category}" using: ${usedSelector}`);
-    } else if (fallbackToGeneric) {
-      console.warn(`[SelectorFactory] No elements found for "${category}", trying generic selectors`);
-      elements = this.findElementsWithGenericFallback(category);
+    } else {
+      // Log detailed debugging information
+      console.warn(`[SelectorFactory] No elements found for "${category}" in version "${version}"`);
+      console.warn(`[SelectorFactory] Tried ${selectors.length} selectors, ${selectorErrors.length} had errors`);
+      
+      if (selectorErrors.length > 0) {
+        console.warn(`[SelectorFactory] Selector errors:`, selectorErrors.slice(0, 3)); // Show first 3 errors
+      }
+      
+      if (fallbackToGeneric) {
+        console.log(`[SelectorFactory] Trying smart fallback for "${category}"`);
+        elements = this.findElementsWithSmartFallback(category);
+      }
     }
 
     return Array.from(elements);
   }
 
   /**
-   * Fallback to generic selectors when specific ones fail
+   * Smart fallback that looks for elements with specific attributes or text content
    */
-  findElementsWithGenericFallback(category) {
-    const genericSelectors = {
-      moreComments: ['button', 'a'],
-      moreReplies: ['button', 'a'],
-      collapsed: ['button'],
-      continueThread: ['a'],
-      crowdControl: ['button', 'div'],
-      contestMode: ['button', 'div'],
-      deleted: ['button', 'div'],
-      viewRest: ['button', 'a']
+  findElementsWithSmartFallback(category) {
+    const smartSelectors = {
+      moreComments: [
+        'button[aria-label*="more comment"]',
+        'button[aria-label*="View more"]',
+        'a[href*="more"]',
+        'button:has(svg[icon-name="caret-down-outline"])',
+        'button[class*="button-brand"]',
+        'button[class*="brand"]'
+      ],
+      moreReplies: [
+        'button[aria-label*="more repl"]',
+        'button[aria-label*="replies"]',
+        'button:has(svg[icon-name="join-outline"])',
+        'button[class*="rpl"]',
+        'button[class*="small"]',
+        'button[class*="plain"]'
+      ],
+      collapsed: [
+        'button[aria-expanded="false"]',
+        'button[aria-label*="Expand"]',
+        'button:has(svg[icon-name="join-outline"])',
+        'button:has(svg[icon-name="plus"])',
+        'button[class*="neutral"]'
+      ],
+      continueThread: [
+        'a[href*="/comments/"]',
+        'a[href*="continue"]',
+        'faceplate-partial[loading="lazy"]'
+      ],
+      crowdControl: [
+        'button[aria-label*="crowd"]',
+        'div[class*="crowd"]',
+        'shreddit-comment[collapsed="true"]'
+      ],
+      contestMode: [
+        'button[aria-label*="contest"]',
+        'div[class*="contest"]',
+        'shreddit-comment[data-contest-mode]'
+      ],
+      deleted: [
+        'button[aria-label*="deleted"]',
+        'div[class*="deleted"]',
+        'shreddit-comment[data-deleted]'
+      ],
+      viewRest: [
+        'button[aria-label*="View the rest"]',
+        'button[aria-label*="View all"]',
+        'a[href*="view"]'
+      ]
     };
 
-    const selectors = genericSelectors[category] || ['button', 'a'];
+    const selectors = smartSelectors[category] || ['button', 'a'];
     let elements = [];
 
     for (const selector of selectors) {
@@ -575,11 +627,44 @@ class SelectorFactory {
         }
         
         if (elements.length > 0) {
-          console.log(`[SelectorFactory] Using generic fallback: ${selector}`);
+          console.log(`[SelectorFactory] Using smart fallback: ${selector} (found ${elements.length} elements)`);
           break;
         }
       } catch (error) {
-        console.warn(`[SelectorFactory] Error with generic selector "${selector}":`, error);
+        console.warn(`[SelectorFactory] Error with smart selector "${selector}":`, error);
+      }
+    }
+
+    // If smart fallback fails, try very basic selectors
+    if (elements.length === 0) {
+      const basicSelectors = {
+        moreComments: ['button', 'a'],
+        moreReplies: ['button', 'a'],
+        collapsed: ['button'],
+        continueThread: ['a'],
+        crowdControl: ['button', 'div'],
+        contestMode: ['button', 'div'],
+        deleted: ['button', 'div'],
+        viewRest: ['button', 'a']
+      };
+
+      const basicSelector = basicSelectors[category] || ['button', 'a'];
+      
+      for (const selector of basicSelector) {
+        try {
+          if (window.elementCache) {
+            elements = window.elementCache.cachedQuerySelectorAll(selector);
+          } else {
+            elements = document.querySelectorAll(selector);
+          }
+          
+          if (elements.length > 0) {
+            console.log(`[SelectorFactory] Using basic fallback: ${selector} (found ${elements.length} elements)`);
+            break;
+          }
+        } catch (error) {
+          console.warn(`[SelectorFactory] Error with basic selector "${selector}":`, error);
+        }
       }
     }
 
@@ -639,6 +724,48 @@ class SelectorFactory {
       buttonClasses: this.buttonClasses,
       elements: this.elements
     });
+    
+    // Also log what elements are actually available on the page
+    this.debugPageElements();
+  }
+
+  /**
+   * Debug what elements are available on the current page
+   */
+  debugPageElements() {
+    console.log('[SelectorFactory] Page Element Analysis:');
+    
+    // Count different types of elements
+    const elementCounts = {
+      buttons: document.querySelectorAll('button').length,
+      anchors: document.querySelectorAll('a').length,
+      shredditComments: document.querySelectorAll('shreddit-comment').length,
+      faceplateButtons: document.querySelectorAll('faceplate-button').length,
+      faceplatePartials: document.querySelectorAll('faceplate-partial').length
+    };
+    
+    console.log('[SelectorFactory] Element counts:', elementCounts);
+    
+    // Look for elements with specific attributes
+    const elementsWithAriaLabel = document.querySelectorAll('[aria-label]');
+    const elementsWithDataTestId = document.querySelectorAll('[data-testid]');
+    const elementsWithRpl = document.querySelectorAll('[rpl]');
+    
+    console.log('[SelectorFactory] Elements with aria-label:', elementsWithAriaLabel.length);
+    console.log('[SelectorFactory] Elements with data-testid:', elementsWithDataTestId.length);
+    console.log('[SelectorFactory] Elements with rpl attribute:', elementsWithRpl.length);
+    
+    // Show some examples of aria-labels
+    if (elementsWithAriaLabel.length > 0) {
+      const ariaLabels = Array.from(elementsWithAriaLabel)
+        .map(el => el.getAttribute('aria-label'))
+        .filter(label => label && (label.includes('more') || label.includes('expand') || label.includes('repl')))
+        .slice(0, 5);
+      
+      if (ariaLabels.length > 0) {
+        console.log('[SelectorFactory] Relevant aria-labels found:', ariaLabels);
+      }
+    }
   }
 }
 
