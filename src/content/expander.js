@@ -1092,12 +1092,20 @@ class CommentExpander {
     const scoredElements = this.detector.getAllExpandableElements();
     console.log(`Found ${scoredElements.length} expandable elements`);
     
+    // NEW: Debug the structure of elements
+    if (scoredElements.length > 0) {
+      console.log('[Expander] Sample element structure:', scoredElements[0]);
+      console.log('[Expander] Element has category property:', 'category' in scoredElements[0]);
+      console.log('[Expander] Element has element property:', 'element' in scoredElements[0]);
+    }
+    
     // Filter based on options
     const filteredElements = scoredElements.filter(item => {
       const { category, element } = item;
       
       // Skip if already processed
       if (this.processed.has(element)) {
+        console.log('[Expander] Skipping already processed element:', category);
         return false;
       }
       
@@ -1116,6 +1124,13 @@ class CommentExpander {
       
       return true;
     });
+    
+    // NEW: Log filtered elements by category
+    const categoryCounts = {};
+    filteredElements.forEach(item => {
+      categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+    });
+    console.log('[Expander] Filtered elements by category:', categoryCounts);
     
     // Add to priority queue
     filteredElements.forEach(item => {

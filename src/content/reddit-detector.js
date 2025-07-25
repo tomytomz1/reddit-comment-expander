@@ -189,13 +189,32 @@ class RedditDetector {
 
     for (const category of categories) {
       const elements = this.selectorFactory.findElements(category);
-      allElements.push(...elements);
+      // Add category information to each element
+      elements.forEach(element => {
+        allElements.push({ category, element });
+      });
     }
 
-    // Remove duplicates
-    const uniqueElements = [...new Set(allElements)];
+    // Remove duplicates based on element reference
+    const uniqueElements = [];
+    const seenElements = new Set();
+    
+    for (const item of allElements) {
+      if (!seenElements.has(item.element)) {
+        seenElements.add(item.element);
+        uniqueElements.push(item);
+      }
+    }
     
     console.log(`[RedditDetector] Found ${uniqueElements.length} unique expandable elements across all categories`);
+    
+    // Log breakdown by category
+    const categoryCounts = {};
+    uniqueElements.forEach(item => {
+      categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+    });
+    console.log('[RedditDetector] Elements by category:', categoryCounts);
+    
     return uniqueElements;
   }
 
