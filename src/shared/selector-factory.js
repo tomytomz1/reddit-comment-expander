@@ -286,6 +286,13 @@ class SelectorFactory {
       'button[rpl][class*="text-neutral-content-strong"][class*="bg-neutral-background"]',
       'button[rpl][class*="button-small"][class*="button-plain"]',
       'button[rpl][class*="icon"][class*="inline-flex"]',
+      // NEW: Handle buttons with newlines in class attribute
+      'button[rpl][class*="text-neutral-content-strong"]',
+      'button[rpl][class*="bg-neutral-background"]',
+      'button[rpl][class*="button-small"]',
+      'button[rpl][class*="button-plain"]',
+      'button[rpl][class*="icon"]',
+      'button[rpl][class*="inline-flex"]',
       
       // Primary selectors with :has support
       this.buildHasSelector(this.elements.button, this.icons.joinOutline),
@@ -678,6 +685,28 @@ class SelectorFactory {
       }
     }
 
+    // NEW: Manual fallback for moreReplies with newlines in class attributes
+    if (elements.length === 0 && category === 'moreReplies') {
+      console.log('[SelectorFactory] Trying manual fallback for moreReplies with newlines...');
+      const allButtons = document.querySelectorAll('button[rpl]');
+      const manualElements = Array.from(allButtons).filter(btn => {
+        const classAttr = btn.getAttribute('class') || '';
+        const hasJoinOutline = btn.querySelector('svg[icon-name="join-outline"]');
+        const hasRequiredClasses = classAttr.includes('text-neutral-content-strong') && 
+                                  classAttr.includes('bg-neutral-background') && 
+                                  classAttr.includes('button-small') && 
+                                  classAttr.includes('button-plain') && 
+                                  classAttr.includes('icon') && 
+                                  classAttr.includes('inline-flex');
+        return hasJoinOutline && hasRequiredClasses;
+      });
+      
+      if (manualElements.length > 0) {
+        console.log(`[SelectorFactory] Manual fallback found ${manualElements.length} moreReplies buttons`);
+        elements = manualElements;
+      }
+    }
+
     return Array.from(elements);
   }
 
@@ -799,9 +828,28 @@ class SelectorFactory {
     const rplButtons = document.querySelectorAll('button[rpl]');
     console.log('[SelectorFactory] Buttons with rpl attribute:', rplButtons.length);
     
+    // NEW: Manual filtering for buttons with newlines in class attribute
+    const manualFilteredButtons = Array.from(rplButtons).filter(btn => {
+      const classAttr = btn.getAttribute('class') || '';
+      const hasJoinOutline = btn.querySelector('svg[icon-name="join-outline"]');
+      const hasRequiredClasses = classAttr.includes('text-neutral-content-strong') && 
+                                classAttr.includes('bg-neutral-background') && 
+                                classAttr.includes('button-small') && 
+                                classAttr.includes('button-plain') && 
+                                classAttr.includes('icon') && 
+                                classAttr.includes('inline-flex');
+      return hasJoinOutline && hasRequiredClasses;
+    });
+    console.log('[SelectorFactory] Manually filtered buttons (handles newlines):', manualFilteredButtons.length);
+    
     // Show examples of the specific pattern buttons
     if (specificPatternButtons.length > 0) {
       console.log('[SelectorFactory] Example of specific pattern button:', specificPatternButtons[0].outerHTML.substring(0, 200) + '...');
+    }
+    
+    // Show examples of manually filtered buttons
+    if (manualFilteredButtons.length > 0) {
+      console.log('[SelectorFactory] Example of manually filtered button:', manualFilteredButtons[0].outerHTML.substring(0, 200) + '...');
     }
     
     // Show examples of rpl buttons with join-outline
