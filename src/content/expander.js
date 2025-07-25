@@ -1769,9 +1769,9 @@ class CommentExpander {
     // Scan for new expandable elements and expand them automatically
     const newElements = this.detector.getAllExpandableElements();
     
-    // Filter out already processed elements
+    // Filter out already processed elements and undefined elements
     const unprocessedElements = newElements.filter(item => 
-      !item.element.dataset.redditExpanderProcessed
+      item && item.element && item.element.dataset && !item.element.dataset.redditExpanderProcessed
     );
     
     if (unprocessedElements.length > 0) {
@@ -1833,6 +1833,12 @@ class CommentExpander {
             // Check pause state before each element
             await this.checkPauseState();
             if (this.shouldCancel) break;
+            
+            // Validate item and element before processing
+            if (!item || !item.element || !item.element.dataset) {
+              console.warn('Skipping invalid element:', item);
+              continue;
+            }
             
             // Mark as processed first to prevent reprocessing
             item.element.dataset.redditExpanderProcessed = 'true';

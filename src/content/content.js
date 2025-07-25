@@ -1127,11 +1127,26 @@ async function bulletproofInitialization() {
         }
       });
       
-      // Store globally for testing
+      // Store globally for testing with multiple access points
       window.redditCommentExpander = expander;
+      window.redditExpander = expander; // Alternative name
+      window.RedditCommentExpander = expander; // Class name
+      
+      // Make it non-configurable to prevent accidental deletion
+      try {
+        Object.defineProperty(window, 'redditCommentExpander', {
+          value: expander,
+          writable: false,
+          configurable: false
+        });
+      } catch (e) {
+        console.warn('Could not make extension non-configurable:', e);
+      }
+      
       console.log('✅ RedditCommentExpander created and stored globally');
       console.log('🔍 Global extension object:', typeof window.redditCommentExpander);
       console.log('🔍 Extension methods available:', Object.getOwnPropertyNames(window.redditCommentExpander));
+      console.log('🔍 Available global names: redditCommentExpander, redditExpander, RedditCommentExpander');
       
       return expander;
     }, 'main-initialization');
@@ -1144,6 +1159,8 @@ async function bulletproofInitialization() {
       console.log('🔄 Attempting fallback initialization without error boundary...');
       const expander = new RedditCommentExpander();
       window.redditCommentExpander = expander;
+      window.redditExpander = expander;
+      window.RedditCommentExpander = expander;
       console.log('✅ Fallback initialization succeeded');
       console.log('🔍 Fallback extension object:', typeof window.redditCommentExpander);
       return expander;
