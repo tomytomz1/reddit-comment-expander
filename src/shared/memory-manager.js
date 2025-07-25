@@ -68,7 +68,7 @@ class MemoryManager {
     }
     
     this._setupPageUnloadCleanup();
-    this._log('MemoryManager initialized', this.options);
+    this._log('MemoryManager initialized', 'info', this.options);
   }
 
   /**
@@ -207,10 +207,14 @@ class MemoryManager {
       const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
       const prefix = `🧠 [MEMORY-MANAGER] [${timestamp}]`;
       
+      // Validate that the level is a valid console method
+      const validLevels = ['log', 'info', 'warn', 'error', 'debug'];
+      const safeLevel = validLevels.includes(level) ? level : 'log';
+      
       if (data) {
-        console[level](`${prefix} ${message}`, data);
+        console[safeLevel](`${prefix} ${message}`, data);
       } else {
-        console[level](`${prefix} ${message}`);
+        console[safeLevel](`${prefix} ${message}`);
       }
     }
   }
