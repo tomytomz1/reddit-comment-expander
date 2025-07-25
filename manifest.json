@@ -35,6 +35,7 @@
         "src/shared/element-cache.js",
         "src/shared/memory-manager.js",
         "src/shared/selector-factory.js",
+        "src/shared/worker-manager.js",
         "src/content/reddit-detector.js",
         "src/content/accessibility.js",
         "src/content/expander.js",
@@ -58,7 +59,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["assets/icons/*", "src/shared/*", "src/popup/logs.html", "src/popup/logs.js"],
+      "resources": ["assets/icons/*", "src/shared/*", "src/popup/logs.html", "src/popup/logs.js", "src/workers/dom-processor.worker.js"],
       "matches": ["*://*.reddit.com/*"]
     }
   ],

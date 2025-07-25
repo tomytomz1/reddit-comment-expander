@@ -143,6 +143,15 @@ class AdaptiveBatchManager {
     return Math.round(this.currentBatchSize);
   }
 
+  // Set optimal batch size from worker analysis
+  setOptimalBatchSize(size) {
+    if (size && size >= this.minBatchSize && size <= this.maxBatchSize) {
+      this.currentBatchSize = size;
+      this.targetBatchSize = size;
+      console.log(`🔧 [BatchManager] Set optimal batch size to ${size} based on worker analysis`);
+    }
+  }
+
   // Record batch processing performance
   recordBatchPerformance(batchSize, processingTime, successCount, totalCount) {
     console.log('[BatchManager] recordBatchPerformance called:', { batchSize, processingTime, successCount, totalCount });
@@ -442,6 +451,11 @@ class CommentExpander {
       console.log('✅ CommentExpander integrated with global error boundary');
     }
     
+    // NEW: Initialize worker support
+    this.workerManager = null;
+    this.threadAnalysis = null;
+    this.selectorOptimization = null;
+    
     // Set up state change observers for UI updates
     this.setupStateObservers();
     
@@ -451,6 +465,107 @@ class CommentExpander {
     });
     
     console.log('Comment Expander initialized with state manager');
+  }
+
+  /**
+   * Initialize worker support for heavy DOM processing
+   */
+  async initializeWorkerSupport() {
+    if (this.workerManager) {
+      console.log('🔧 WorkerManager already initialized');
+      return;
+    }
+
+    try {
+      console.log('🔧 Initializing worker support...');
+      
+      // Create worker manager
+      this.workerManager = new WorkerManager({
+        maxWorkers: 2,
+        taskTimeout: 30000,
+        enableFallback: true,
+        enablePerformanceTracking: true
+      });
+
+      // Wait for worker initialization
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Perform initial health check
+      const healthResult = await this.workerManager.healthCheck();
+      console.log('🔧 Worker health check:', healthResult);
+      
+      if (healthResult.success) {
+        console.log('✅ Worker support initialized successfully');
+      } else {
+        console.warn('⚠️ Worker health check failed, will use fallback');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize worker support:', error);
+      this.workerManager = null;
+    }
+  }
+
+  /**
+   * Test worker performance and functionality
+   */
+  async testWorkerPerformance() {
+    if (!this.workerManager) {
+      await this.initializeWorkerSupport();
+      await new Promise(resolve => setTimeout(resolve, 100)); // Let worker initialize
+    }
+    
+    const htmlContent = document.documentElement.outerHTML;
+    
+    console.log('🔧 Testing worker performance...');
+    
+    try {
+      // Test 1: Thread Analysis
+      const analysisStart = performance.now();
+      const analysis = await this.workerManager.analyzeThreadStructure(htmlContent);
+      const analysisTime = performance.now() - analysisStart;
+      
+      // Test 2: Element Parsing (using detector selectors)
+      const parseStart = performance.now();
+      const selectors = this.detector.getSelectors();
+      const parseResult = await this.workerManager.parseExpandableElements(htmlContent, selectors);
+      const parseTime = performance.now() - parseStart;
+      
+      // Test 3: Health Check
+      const healthResult = await this.workerManager.healthCheck();
+      
+      // Test 4: Worker Statistics
+      const workerStats = this.workerManager.getStats();
+      
+      const results = {
+        threadAnalysis: {
+          time: analysisTime.toFixed(2) + 'ms',
+          commentCount: analysis.commentCount,
+          complexity: analysis.threadComplexity,
+          success: analysis.success,
+          fallback: analysis.fallback
+        },
+        elementParsing: {
+          time: parseTime.toFixed(2) + 'ms',
+          elementsFound: parseResult.totalFound,
+          categories: parseResult.categories,
+          success: parseResult.success,
+          fallback: parseResult.fallback
+        },
+        workerHealth: healthResult,
+        workerStats: workerStats,
+        totalWorkerTime: (analysisTime + parseTime).toFixed(2) + 'ms'
+      };
+      
+      console.log('🔧 Worker Performance Results:', results);
+      
+      return results;
+    } catch (error) {
+      console.error('🔧 Worker performance test failed:', error);
+      return {
+        error: error.message,
+        success: false
+      };
+    }
   }
 
   // Legacy property getters for backward compatibility
@@ -476,7 +591,7 @@ class CommentExpander {
     const stateData = this.state.getState();
     const batchStats = this.batchManager.getPerformanceStats();
     
-    return {
+    const stats = {
       startTime: stateData.progress.startTime,
       endTime: stateData.progress.endTime,
       expanded: stateData.progress.successful,
@@ -494,6 +609,23 @@ class CommentExpander {
         totalBatches: batchStats.totalBatches
       }
     };
+    
+    // NEW: Add worker performance statistics if available
+    if (this.workerManager) {
+      stats.workerPerformance = this.workerManager.getStats();
+      
+      if (this.threadAnalysis) {
+        stats.threadAnalysis = {
+          commentCount: this.threadAnalysis.commentCount,
+          threadComplexity: this.threadAnalysis.threadComplexity,
+          maxDepth: this.threadAnalysis.maxDepth,
+          avgDepth: this.threadAnalysis.avgDepth,
+          recommendedBatchSize: this.threadAnalysis.recommendedBatchSize
+        };
+      }
+    }
+    
+    return stats;
   }
 
   /**
@@ -789,6 +921,36 @@ class CommentExpander {
     this.accessibility.manageFocusDuringExpansion();
 
     try {
+      // NEW: Initialize worker support for heavy DOM processing
+      await this.initializeWorkerSupport();
+      
+      // NEW: Analyze thread structure with worker if available
+      if (this.workerManager) {
+        try {
+          const htmlContent = document.documentElement.outerHTML;
+          this.threadAnalysis = await this.workerManager.analyzeThreadStructure(htmlContent);
+          
+          if (this.threadAnalysis.success) {
+            console.log('🔧 Thread analysis completed:', this.threadAnalysis);
+            
+            // Update batch size based on worker analysis
+            if (this.threadAnalysis.recommendedBatchSize) {
+              this.batchManager.setOptimalBatchSize(this.threadAnalysis.recommendedBatchSize);
+              console.log(`🔧 Optimized batch size: ${this.threadAnalysis.recommendedBatchSize}`);
+            }
+            
+            // Update progress overlay with thread analysis
+            this.updatePersistentPhase(
+              'Thread Analysis',
+              `Analyzed ${this.threadAnalysis.commentCount} comments (complexity: ${(this.threadAnalysis.threadComplexity * 100).toFixed(1)}%)`,
+              'info'
+            );
+          }
+        } catch (error) {
+          console.warn('🔧 Thread analysis failed, continuing with default settings:', error);
+        }
+      }
+      
       // Create persistent status overlay that will stay throughout the entire process
       this.statusOverlay = this.createPersistentProgressOverlay();
       this.autoExpansionStats.currentOverlay = this.statusOverlay;
@@ -1947,13 +2109,26 @@ class CommentExpander {
       progressText.textContent = `${this.autoExpansionStats.totalProcessed} expanded`;
     }
     
-    // Update time with batch optimization info
+    // Update time with batch optimization and worker info
     const progressTime = overlay.querySelector('.persistent-progress-time');
     if (progressTime) {
       const rate = this.autoExpansionStats.totalProcessed / totalTime;
       const batchStats = this.batchManager.getPerformanceStats();
       const batchInfo = batchStats.totalBatches > 0 ? ` • Batch: ${batchStats.currentBatchSize} • ${batchStats.avgElementsPerSecond.toFixed(1)}/s` : '';
-      progressTime.textContent = `${totalTime.toFixed(1)}s elapsed • ${rate.toFixed(1)}/s${batchInfo}`;
+      
+      // Add worker statistics if available
+      let workerInfo = '';
+      if (this.workerManager) {
+        const workerStats = this.workerManager.getStats();
+        if (workerStats.totalTasks > 0) {
+          workerInfo = ` • Worker: ${workerStats.successfulTasks}/${workerStats.totalTasks} tasks`;
+          if (workerStats.fallbackUsed > 0) {
+            workerInfo += ` (${workerStats.fallbackUsed} fallback)`;
+          }
+        }
+      }
+      
+      progressTime.textContent = `${totalTime.toFixed(1)}s elapsed • ${rate.toFixed(1)}/s${batchInfo}${workerInfo}`;
     }
     
     // Update progress bar (simple linear progress based on time)
