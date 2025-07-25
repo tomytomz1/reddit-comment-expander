@@ -1130,6 +1130,8 @@ async function bulletproofInitialization() {
       // Store globally for testing
       window.redditCommentExpander = expander;
       console.log('✅ RedditCommentExpander created and stored globally');
+      console.log('🔍 Global extension object:', typeof window.redditCommentExpander);
+      console.log('🔍 Extension methods available:', Object.getOwnPropertyNames(window.redditCommentExpander));
       
       return expander;
     }, 'main-initialization');
@@ -1143,6 +1145,7 @@ async function bulletproofInitialization() {
       const expander = new RedditCommentExpander();
       window.redditCommentExpander = expander;
       console.log('✅ Fallback initialization succeeded');
+      console.log('🔍 Fallback extension object:', typeof window.redditCommentExpander);
       return expander;
     } catch (fallbackError) {
       console.error('💥 Even fallback initialization failed:', fallbackError);

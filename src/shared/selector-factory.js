@@ -239,7 +239,7 @@ class SelectorFactory {
         `${this.elements.shredditComment}-tree ${this.elements.button}${this.attributes.ariaLabel.replace('{text}', 'more')}`,
         `${this.elements.faceplateButton}${this.attributes.slot.replace('{name}', 'more-comments-button')}`,
         this.buildHasSelector(this.elements.button, this.icons.caretDown),
-        this.buildHasSelector(this.elements.button, 'span:contains("View more comments")'),
+        `${this.elements.button}${this.attributes.ariaLabel.replace('{text}', 'View more comments')}`,
         `${this.elements.button}${this.buttonClasses.brand}${this.buildHasSelector('', this.icons.caretDown)}`,
         '#top-level-more-comments-partial button',
         '#top-level-more-comments-partial',

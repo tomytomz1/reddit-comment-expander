@@ -142,7 +142,7 @@ class RedditDetector {
           'faceplate-button[slot="more-comments-button"]',
           // Main "View more comments" button at bottom of page
           'button:has(svg[icon-name="caret-down-outline"])',
-          'button:has(span:contains("View more comments"))',
+          'button[aria-label*="View more comments"]',
           'button.button-brand:has(svg[icon-name="caret-down-outline"])',
           '#top-level-more-comments-partial button',
           '#top-level-more-comments-partial',
@@ -178,7 +178,7 @@ class RedditDetector {
           'button[rpl].inline-flex',
           // NEW: Add support for anchor/link elements that also serve as "more replies"
           'a[slot="more-comments-permalink"]:has(svg[icon-name="join-outline"])',
-          'a:has(svg[icon-name="join-outline"]):has(span:contains("More replies"))',
+          'a:has(svg[icon-name="join-outline"])[aria-label*="More replies"]',
           'a.text-tone-2:has(svg[icon-name="join-outline"])',
           // Fallback anchor selectors
           'a[slot="more-comments-permalink"]',
