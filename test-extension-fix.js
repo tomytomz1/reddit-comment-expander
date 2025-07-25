@@ -9,8 +9,6 @@ function checkExtensionAvailability() {
     'RedditCommentExpander'
   ];
   
-  console.log('🔍 Checking all possible extension names...');
-  
   for (const name of possibleNames) {
     const available = typeof window[name] !== 'undefined';
     console.log(`${name}: ${available ? '✅ Available' : '❌ Not found'}`);
@@ -31,14 +29,41 @@ function checkExtensionAvailability() {
   return null;
 }
 
-// Wait a moment for extension to initialize
-setTimeout(() => {
-  console.log('🔍 Checking extension availability...');
-  
-  const extension = checkExtensionAvailability();
-  
+// Function to wait for extension to be ready
+function waitForExtension(maxWaitTime = 10000) {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    
+    const check = () => {
+      const extension = checkExtensionAvailability();
+      
+      if (extension) {
+        console.log(`✅ Extension found as: ${extension.name}`);
+        resolve(extension);
+        return;
+      }
+      
+      const elapsed = Date.now() - startTime;
+      if (elapsed > maxWaitTime) {
+        console.log('❌ Extension not found after waiting', maxWaitTime, 'ms');
+        resolve(null);
+        return;
+      }
+      
+      // Check again in 500ms
+      setTimeout(check, 500);
+    };
+    
+    // Start checking
+    check();
+  });
+}
+
+// Wait for extension to be ready
+waitForExtension(15000).then(extension => {
   if (extension) {
-    console.log(`✅ Extension found as: ${extension.name}`);
+    console.log('✅ Extension found!');
+    console.log('Methods:', Object.getOwnPropertyNames(extension.instance));
     
     // Test basic functionality
     if (typeof extension.instance.expandAllComments === 'function') {
@@ -83,7 +108,7 @@ setTimeout(() => {
     console.log('❌ Extension not found in any global name');
     console.log('Available window properties:', Object.keys(window).filter(key => key.includes('reddit')));
   }
-}, 2000);
+});
 
 // Also check immediately
 console.log('🔍 Immediate check - Extension loaded:', checkExtensionAvailability() !== null); 

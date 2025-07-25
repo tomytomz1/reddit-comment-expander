@@ -427,7 +427,10 @@ class RedditCommentExpander {
       return;
     }
     
-    this.isExpanding = true;
+    // Update state to indicate expansion is starting
+    if (this.state) {
+      this.state.updateStatus('expanding');
+    }
     
     // Update floating button state
     if (this.fab) {
@@ -457,7 +460,10 @@ class RedditCommentExpander {
       console.log('Starting auto-scroll to load all content...');
       await this.expander.startAutoScroll();
       
-      this.isExpanding = false;
+      // Update state to indicate expansion is complete
+      if (this.state) {
+        this.state.updateStatus('idle');
+      }
       
       // Update floating button state
       if (this.fab) {
@@ -489,7 +495,10 @@ class RedditCommentExpander {
       
     }).catch((error) => {
       console.error('Expansion failed:', error);
-      this.isExpanding = false;
+      // Update state to indicate expansion failed
+      if (this.state) {
+        this.state.updateStatus('idle');
+      }
       
       // Update floating button state
       if (this.fab) {
