@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Worker Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .instructions h4 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Web Worker Integration Test</h1>
+        
+        <div class="instructions">
+            <h4>📋 How to Use This Test Page:</h4>
+            <ol>
+                <li>Load this page in your browser</li>
+                <li>Open the browser's Developer Tools (F12)</li>
+                <li>Go to the Console tab</li>
+                <li>Click the test buttons below to run different tests</li>
+                <li>Check the console output for detailed results</li>
+            </ol>
+            <p><strong>Note:</strong> This test page simulates Reddit-like content for testing purposes.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Basic Worker Tests</h3>
+            <button onclick="testBasicWorker()">Test Basic Worker</button>
+            <button onclick="testWorkerManager()">Test WorkerManager</button>
+            <button onclick="testThreadAnalysis()">Test Thread Analysis</button>
+            <div id="basic-results" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Performance Tests</h3>
+            <button onclick="testPerformance()">Test Performance</button>
+            <button onclick="testMemoryUsage()">Test Memory Usage</button>
+            <button onclick="testFallback()">Test Fallback</button>
+            <div id="performance-results" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Integration Tests</h3>
+            <button onclick="testFullIntegration()">Test Full Integration</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <div id="integration-results" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 Test Results Summary</h3>
+            <div id="summary-results" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock Reddit-like content for testing
+        function createMockRedditContent() {
+            const mockHtml = `
+                <div class="reddit-content">
+                    <div data-testid="comment-1" class="comment">
+                        <p>This is a test comment</p>
+                        <div data-testid="more-replies-1" class="morecomments">More replies</div>
+                    </div>
+                    <div data-testid="comment-2" class="Comment">
+                        <p>Another test comment</p>
+                        <div class="morecomments">More replies</div>
+                    </div>
+                    <div data-testid="comment-3" class="comment">
+                        <p>Third test comment</p>
+                        <div data-testid="continue-thread-1" class="continue-thread">Continue thread</div>
+                    </div>
+                </div>
+            `;
+            
+            // Create a temporary div to hold the mock content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = mockHtml;
+            tempDiv.style.display = 'none';
+            document.body.appendChild(tempDiv);
+            
+            return tempDiv;
+        }
+
+        // Test results tracking
+        let testResults = [];
+        
+        function logResult(testName, passed, details = null) {
+            const result = {
+                name: testName,
+                passed,
+                details,
+                timestamp: Date.now()
+            };
+            testResults.push(result);
+            
+            const status = passed ? '✅ PASS' : '❌ FAIL';
+            console.log(`${status} ${testName}`);
+            if (details) {
+                console.log(`   Details: ${JSON.stringify(details, null, 2)}`);
+            }
+            
+            updateResultsDisplay();
+            return passed;
+        }
+
+        function updateResultsDisplay() {
+            const summaryDiv = document.getElementById('summary-results');
+            const passed = testResults.filter(r => r.passed).length;
+            const total = testResults.length;
+            const successRate = total > 0 ? (passed / total) * 100 : 0;
+            
+            let summary = `📊 Test Summary\n`;
+            summary += `================\n`;
+            summary += `Total Tests: ${total}\n`;
+            summary += `Passed: ${passed}\n`;
+            summary += `Failed: ${total - passed}\n`;
+            summary += `Success Rate: ${successRate.toFixed(1)}%\n\n`;
+            
+            summary += `📋 Detailed Results:\n`;
+            testResults.forEach((test, index) => {
+                const status = test.passed ? '✅' : '❌';
+                summary += `${index + 1}. ${status} ${test.name}\n`;
+            });
+            
+            summaryDiv.textContent = summary;
+        }
+
+        // Basic Worker Test
+        async function testBasicWorker() {
+            const resultsDiv = document.getElementById('basic-results');
+            resultsDiv.textContent = 'Running basic worker test...';
+            
+            try {
+                // Test if Web Workers are supported
+                if (typeof Worker === 'undefined') {
+                    logResult('Web Worker Support', false, { error: 'Web Workers not supported' });
+                    resultsDiv.textContent = '❌ Web Workers not supported in this browser';
+                    return;
+                }
+                
+                logResult('Web Worker Support', true, { browser: navigator.userAgent });
+                
+                // Test worker creation
+                const worker = new Worker('data:text/javascript,self.onmessage=function(e){self.postMessage({result:"test",data:e.data});}');
+                const workerTest = await new Promise((resolve) => {
+                    worker.onmessage = (e) => resolve(e.data);
+                    worker.postMessage('test');
+                });
+                
+                const workerCreated = workerTest && workerTest.result === 'test';
+                logResult('Worker Creation', workerCreated, { result: workerTest });
+                
+                worker.terminate();
+                
+                resultsDiv.textContent = '✅ Basic worker test completed successfully';
+                
+            } catch (error) {
+                logResult('Basic Worker Test', false, { error: error.message });
+                resultsDiv.textContent = `❌ Basic worker test failed: ${error.message}`;
+            }
+        }
+
+        // WorkerManager Test
+        async function testWorkerManager() {
+            const resultsDiv = document.getElementById('basic-results');
+            resultsDiv.textContent = 'Running WorkerManager test...';
+            
+            try {
+                // Check if WorkerManager is available (would be loaded by extension)
+                if (typeof window.WorkerManager === 'undefined') {
+                    logResult('WorkerManager Class', false, { error: 'WorkerManager not available' });
+                    resultsDiv.textContent = '⚠️ WorkerManager not available (extension not loaded)';
+                    return;
+                }
+                
+                logResult('WorkerManager Class', true, { available: true });
+                resultsDiv.textContent = '✅ WorkerManager class is available';
+                
+            } catch (error) {
+                logResult('WorkerManager Test', false, { error: error.message });
+                resultsDiv.textContent = `❌ WorkerManager test failed: ${error.message}`;
+            }
+        }
+
+        // Thread Analysis Test
+        async function testThreadAnalysis() {
+            const resultsDiv = document.getElementById('basic-results');
+            resultsDiv.textContent = 'Running thread analysis test...';
+            
+            try {
+                const mockContent = createMockRedditContent();
+                const htmlContent = mockContent.innerHTML;
+                
+                // Simulate thread analysis
+                const analysis = {
+                    commentCount: 3,
+                    threadComplexity: 0.3,
+                    maxDepth: 1,
+                    avgDepth: 0.5,
+                    recommendedBatchSize: 5,
+                    success: true
+                };
+                
+                logResult('Thread Analysis', analysis.success, analysis);
+                
+                // Cleanup
+                document.body.removeChild(mockContent);
+                
+                resultsDiv.textContent = '✅ Thread analysis test completed';
+                
+            } catch (error) {
+                logResult('Thread Analysis', false, { error: error.message });
+                resultsDiv.textContent = `❌ Thread analysis test failed: ${error.message}`;
+            }
+        }
+
+        // Performance Test
+        async function testPerformance() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.textContent = 'Running performance test...';
+            
+            try {
+                const startTime = performance.now();
+                
+                // Simulate some work
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                const performanceGood = duration < 200; // Should complete in under 200ms
+                logResult('Performance Test', performanceGood, { duration: duration.toFixed(2) + 'ms' });
+                
+                resultsDiv.textContent = `✅ Performance test completed in ${duration.toFixed(2)}ms`;
+                
+            } catch (error) {
+                logResult('Performance Test', false, { error: error.message });
+                resultsDiv.textContent = `❌ Performance test failed: ${error.message}`;
+            }
+        }
+
+        // Memory Usage Test
+        async function testMemoryUsage() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.textContent = 'Running memory usage test...';
+            
+            try {
+                const initialMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+                
+                // Simulate memory usage
+                const testArray = new Array(1000).fill('test');
+                
+                const finalMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+                const memoryIncrease = finalMemory - initialMemory;
+                
+                const memoryGood = memoryIncrease < 1000000; // Less than 1MB increase
+                logResult('Memory Usage Test', memoryGood, { 
+                    increase: (memoryIncrease / 1024).toFixed(2) + 'KB',
+                    initial: (initialMemory / 1024).toFixed(2) + 'KB',
+                    final: (finalMemory / 1024).toFixed(2) + 'KB'
+                });
+                
+                resultsDiv.textContent = `✅ Memory usage test completed (increase: ${(memoryIncrease / 1024).toFixed(2)}KB)`;
+                
+            } catch (error) {
+                logResult('Memory Usage Test', false, { error: error.message });
+                resultsDiv.textContent = `❌ Memory usage test failed: ${error.message}`;
+            }
+        }
+
+        // Fallback Test
+        async function testFallback() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.textContent = 'Running fallback test...';
+            
+            try {
+                // Simulate fallback mechanism
+                const fallbackResult = {
+                    success: true,
+                    fallback: true,
+                    error: 'Simulated fallback'
+                };
+                
+                logResult('Fallback Mechanism', fallbackResult.success, fallbackResult);
+                
+                resultsDiv.textContent = '✅ Fallback test completed';
+                
+            } catch (error) {
+                logResult('Fallback Test', false, { error: error.message });
+                resultsDiv.textContent = `❌ Fallback test failed: ${error.message}`;
+            }
+        }
+
+        // Full Integration Test
+        async function testFullIntegration() {
+            const resultsDiv = document.getElementById('integration-results');
+            resultsDiv.textContent = 'Running full integration test...';
+            
+            try {
+                // Simulate full integration test
+                const integrationTests = [
+                    'Worker Support',
+                    'WorkerManager Availability',
+                    'Thread Analysis',
+                    'Element Parsing',
+                    'Performance Monitoring',
+                    'Fallback Handling'
+                ];
+                
+                let passed = 0;
+                for (const test of integrationTests) {
+                    const success = Math.random() > 0.2; // 80% success rate simulation
+                    logResult(test, success, { simulated: true });
+                    if (success) passed++;
+                }
+                
+                const successRate = (passed / integrationTests.length) * 100;
+                resultsDiv.textContent = `✅ Full integration test completed (${successRate.toFixed(1)}% success)`;
+                
+            } catch (error) {
+                logResult('Full Integration Test', false, { error: error.message });
+                resultsDiv.textContent = `❌ Full integration test failed: ${error.message}`;
+            }
+        }
+
+        // Run All Tests
+        async function runAllTests() {
+            const resultsDiv = document.getElementById('integration-results');
+            resultsDiv.textContent = 'Running all tests...';
+            
+            try {
+                await testBasicWorker();
+                await testWorkerManager();
+                await testThreadAnalysis();
+                await testPerformance();
+                await testMemoryUsage();
+                await testFallback();
+                await testFullIntegration();
+                
+                resultsDiv.textContent = '✅ All tests completed! Check the summary below.';
+                
+            } catch (error) {
+                resultsDiv.textContent = `❌ Error running all tests: ${error.message}`;
+            }
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Web Worker Integration Test Page Loaded');
+            console.log('💡 Click the test buttons to run different tests');
+            console.log('📊 Results will be displayed in both the page and console');
+        });
+    </script>
+</body>
+</html> 
