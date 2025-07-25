@@ -611,9 +611,11 @@ class SelectorFactory {
         'faceplate-partial[loading="lazy"]'
       ],
       crowdControl: [
-        'button[aria-label*="crowd"]',
-        'div[class*="crowd"]',
-        'shreddit-comment[collapsed="true"]'
+        // Only target actual crowd-controlled comments, not UI buttons
+        'shreddit-comment[collapsed="true"][class*="crowd-control"]',
+        'shreddit-comment[data-crowd-control="true"]',
+        'shreddit-comment[collapsed="true"]:has(button[aria-label*="Expand"])',
+        'shreddit-comment[collapsed="true"]:has(button:has(svg[icon-name="join-outline"]))'
       ],
       contestMode: [
         'button[aria-label*="contest"]',

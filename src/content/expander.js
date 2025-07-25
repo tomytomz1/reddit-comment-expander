@@ -1280,6 +1280,26 @@ class CommentExpander {
       return true;
     }
     
+    // Check if element is visible and clickable
+    const rect = expandButton.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(expandButton);
+    const isVisible = rect.width > 0 && rect.height > 0 && 
+                     computedStyle.visibility !== 'hidden' &&
+                     computedStyle.display !== 'none' &&
+                     computedStyle.opacity !== '0';
+    
+    // Additional check for invisible classes (like "invisible h-0 !p-0")
+    const classList = expandButton.className || '';
+    const isInvisibleClass = classList.includes('invisible') || 
+                           classList.includes('h-0') || 
+                           classList.includes('!p-0') ||
+                           classList.includes('hidden');
+    
+    if (!isVisible || isInvisibleClass) {
+      console.log('[Expander] Skipping invisible/hidden collapsed button:', expandButton, 'Classes:', classList);
+      return false;
+    }
+    
     // Prevent clicking share buttons
     const ariaLabel = expandButton.getAttribute('aria-label') || '';
     const dataTestId = expandButton.getAttribute('data-testid') || '';
@@ -1365,6 +1385,25 @@ class CommentExpander {
     // Handle "load more comments" buttons/links and faceplate-partial elements
     try {
       return await this.errorHandler.executeWithAbortHandling(async () => {
+        // Check if element is visible and clickable
+        const rect = element.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(element);
+        const isVisible = rect.width > 0 && rect.height > 0 && 
+                         computedStyle.visibility !== 'hidden' &&
+                         computedStyle.display !== 'none' &&
+                         computedStyle.opacity !== '0';
+        
+        // Additional check for invisible classes
+        const classList = element.className || '';
+        const isInvisibleClass = classList.includes('invisible') || 
+                               classList.includes('h-0') || 
+                               classList.includes('!p-0') ||
+                               classList.includes('hidden');
+        
+        if (!isVisible || isInvisibleClass) {
+          console.log('[Expander] Skipping invisible/hidden more comments element:', element, 'Classes:', classList);
+          return false;
+        }
         if (element.tagName === 'FACEPLATE-PARTIAL') {
           // For faceplate-partial elements (like top-level-more-comments-partial)
           const button = element.querySelector('button');
@@ -2125,6 +2164,18 @@ class CommentExpander {
         return;
       }
       this.autoExpansionStats.currentOverlay = overlay;
+    }
+    
+    // Additional safety check: ensure overlay is still valid
+    if (!overlay || !overlay.querySelector) {
+      console.log('[Progress] Overlay is invalid, recreating...');
+      this.autoExpansionStats.currentOverlay = null;
+      this.createPersistentProgressOverlay();
+      overlay = this.autoExpansionStats.currentOverlay;
+      if (!overlay) {
+        console.log('[Progress] Failed to recreate overlay');
+        return;
+      }
     }
     
     const totalTime = (performance.now() - this.autoExpansionStats.sessionStartTime) / 1000;
