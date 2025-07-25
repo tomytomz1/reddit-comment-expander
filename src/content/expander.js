@@ -1778,6 +1778,11 @@ class CommentExpander {
     if (unprocessedElements.length > 0) {
       console.log(`Found ${unprocessedElements.length} new expandable elements from scroll, processing...`);
       
+      // Update counter for elements found during auto-scroll
+      if (this.autoScrollStats.isActive) {
+        this.autoExpansionStats.elementsFoundDuringScroll += unprocessedElements.length;
+      }
+      
       // Initialize or update cumulative progress tracking
       if (!this.autoExpansionStats.isActive) {
         this.autoExpansionStats.isActive = true;
@@ -2114,7 +2119,12 @@ class CommentExpander {
     // Update progress text
     const progressText = overlay.querySelector('.persistent-progress-text');
     if (progressText) {
-      progressText.textContent = `${this.autoExpansionStats.totalProcessed} expanded`;
+      // Show elements found during auto-scroll if we're in that phase
+      if (this.autoScrollStats.isActive && this.autoExpansionStats.elementsFoundDuringScroll > 0) {
+        progressText.textContent = `${this.autoExpansionStats.elementsFoundDuringScroll} found • ${this.autoExpansionStats.totalProcessed} expanded`;
+      } else {
+        progressText.textContent = `${this.autoExpansionStats.totalProcessed} expanded`;
+      }
     }
     
     // Update time with batch optimization and worker info
@@ -2547,6 +2557,9 @@ class CommentExpander {
       'Loading all content by scrolling to bottom...',
       'info'
     );
+    
+    // Initialize counter for elements found during auto-scroll
+    this.autoExpansionStats.elementsFoundDuringScroll = 0;
 
     // Start the auto-scroll process
     this.performAutoScroll();
