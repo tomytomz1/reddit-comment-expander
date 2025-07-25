@@ -281,6 +281,12 @@ class SelectorFactory {
    */
   buildShRedditMoreRepliesSelectors() {
     const baseSelectors = [
+      // NEW: Exact button patterns from the user's examples (HIGHEST PRIORITY)
+      'button[rpl][class*="text-neutral-content-strong"][class*="bg-neutral-background"][class*="button-small"][class*="button-plain"][class*="icon"][class*="inline-flex"]',
+      'button[rpl][class*="text-neutral-content-strong"][class*="bg-neutral-background"]',
+      'button[rpl][class*="button-small"][class*="button-plain"]',
+      'button[rpl][class*="icon"][class*="inline-flex"]',
+      
       // Primary selectors with :has support
       this.buildHasSelector(this.elements.button, this.icons.joinOutline),
       this.buildHasSelector(`${this.elements.button}${this.buttonClasses.rpl}`, this.icons.joinOutline),
@@ -574,6 +580,10 @@ class SelectorFactory {
         'button[class*="brand"]'
       ],
       moreReplies: [
+        // NEW: Specific patterns for the non-expanding buttons
+        'button[rpl][class*="text-neutral-content-strong"][class*="bg-neutral-background"]',
+        'button[rpl][class*="button-small"][class*="button-plain"]',
+        'button[rpl][class*="icon"][class*="inline-flex"]',
         'button[aria-label*="more repl"]',
         'button[aria-label*="replies"]',
         'button:has(svg[icon-name="join-outline"])',
@@ -755,6 +765,9 @@ class SelectorFactory {
     console.log('[SelectorFactory] Elements with data-testid:', elementsWithDataTestId.length);
     console.log('[SelectorFactory] Elements with rpl attribute:', elementsWithRpl.length);
     
+    // NEW: Specific debug for the non-expanding button patterns
+    this.debugNonExpandingButtons();
+    
     // Show some examples of aria-labels
     if (elementsWithAriaLabel.length > 0) {
       const ariaLabels = Array.from(elementsWithAriaLabel)
@@ -765,6 +778,38 @@ class SelectorFactory {
       if (ariaLabels.length > 0) {
         console.log('[SelectorFactory] Relevant aria-labels found:', ariaLabels);
       }
+    }
+  }
+
+  /**
+   * NEW: Debug specifically for the non-expanding button patterns
+   */
+  debugNonExpandingButtons() {
+    console.log('[SelectorFactory] Debugging Non-Expanding Button Patterns:');
+    
+    // Look for buttons with the exact pattern from user's examples
+    const specificPatternButtons = document.querySelectorAll('button[rpl][class*="text-neutral-content-strong"][class*="bg-neutral-background"][class*="button-small"][class*="button-plain"][class*="icon"][class*="inline-flex"]');
+    console.log('[SelectorFactory] Buttons with exact pattern:', specificPatternButtons.length);
+    
+    // Look for buttons with join-outline icons
+    const joinOutlineButtons = document.querySelectorAll('button:has(svg[icon-name="join-outline"])');
+    console.log('[SelectorFactory] Buttons with join-outline icon:', joinOutlineButtons.length);
+    
+    // Look for buttons with rpl attribute
+    const rplButtons = document.querySelectorAll('button[rpl]');
+    console.log('[SelectorFactory] Buttons with rpl attribute:', rplButtons.length);
+    
+    // Show examples of the specific pattern buttons
+    if (specificPatternButtons.length > 0) {
+      console.log('[SelectorFactory] Example of specific pattern button:', specificPatternButtons[0].outerHTML.substring(0, 200) + '...');
+    }
+    
+    // Show examples of rpl buttons with join-outline
+    const rplWithJoinOutline = Array.from(rplButtons).filter(btn => btn.querySelector('svg[icon-name="join-outline"]'));
+    console.log('[SelectorFactory] RPL buttons with join-outline icon:', rplWithJoinOutline.length);
+    
+    if (rplWithJoinOutline.length > 0) {
+      console.log('[SelectorFactory] Example of RPL button with join-outline:', rplWithJoinOutline[0].outerHTML.substring(0, 200) + '...');
     }
   }
 }
